@@ -1,4 +1,5 @@
 import { useUserStore } from '@/stores/user'
+import { goLogin } from './auth'
 
 /** 后端统一返回格式，和 Spring Boot 那边的 Result<T> 一一对应。约定 code 为 0 表示成功 */
 export interface ApiResult<T> {
@@ -63,7 +64,8 @@ export function request<T = unknown>(options: RequestOptions): Promise<T> {
 
         if (res.statusCode === 401) {
           userStore.logout()
-          fail(new ApiError(401, '登录已过期，请重新登录'))
+          fail(new ApiError(401, body?.message || '登录已过期，请重新登录'))
+          goLogin()
           return
         }
 

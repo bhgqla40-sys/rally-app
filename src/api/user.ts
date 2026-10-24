@@ -1,19 +1,15 @@
 /**
  * 用户相关接口。
- * 现在用 mock 数据；后端完成后换成注释里的 http 调用即可。
+ * - fetchMyProfile  ✅ 已接入后端（rally-server：UserController）
+ * - fetchMySignups  还是 mock，后端做完报名模块后换成注释里的 http 调用
  */
-import { ME, db, toBrief } from '@/mock/db'
+import { db, toBrief } from '@/mock/db'
 import type { MyProfile, SignupRecord } from '@/types'
+import { http } from '@/utils/request'
 import { mockRequest } from './mock'
 
-/** 我还没付的账单数量 */
-function pendingBillCount() {
-  return db.bills.filter((b) => b.members.some((m) => m.member.id === ME.id && !m.paid && !m.isOrganizer)).length
-}
-
 export function fetchMyProfile(): Promise<MyProfile> {
-  // return http.get<MyProfile>('/users/me')
-  return mockRequest(() => ({ ...db.profile, groupCount: db.groups.length, pendingBillCount: pendingBillCount() }))
+  return http.get<MyProfile>('/users/me')
 }
 
 /** 报名记录：UPCOMING 还没结束的，HISTORY 已经结束的 */

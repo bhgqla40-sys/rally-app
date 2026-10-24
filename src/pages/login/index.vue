@@ -40,6 +40,7 @@
 </template>
 
 <script setup lang="ts">
+import { onLoad } from '@dcloudio/uni-app'
 import { computed, reactive, ref } from 'vue'
 import { useToast } from 'wot-design-uni'
 import { login, register } from '@/api/auth'
@@ -54,6 +55,12 @@ const userStore = useUserStore()
 const mode = ref<Mode>('login')
 const submitting = ref(false)
 const form = reactive({ phone: '', password: '', nickname: '' })
+
+/** 登录成功后要回到的页面，没有就去首页 */
+let redirect = '/pages/index/index'
+onLoad((query) => {
+  if (query?.redirect) redirect = decodeURIComponent(query.redirect)
+})
 
 const modeLabel = computed({
   get: () => MODE_LABELS[MODES.indexOf(mode.value)],
@@ -82,9 +89,9 @@ async function submit() {
       mode.value === 'login'
         ? await login({ phone: form.phone, password: form.password })
         : await register({ phone: form.phone, password: form.password, nickname: form.nickname.trim() })
-    userStore.setLogin(result.token, result.userId)
+    userStore.setLogin(result.token, result.userId, result.nickname)
     toast.success(`欢迎，${result.nickname}`)
-    setTimeout(() => uni.reLaunch({ url: '/pages/index/index' }), 600)
+    setTimeout(() => uni.reLaunch({ url: redirect }), 600)
   } finally {
     submitting.value = false
   }

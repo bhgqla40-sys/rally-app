@@ -3,27 +3,33 @@ import { ref } from 'vue'
 
 const TOKEN_KEY = 'token'
 const USER_ID_KEY = 'userId'
+const NICKNAME_KEY = 'nickname'
 
 /**
  * 登录状态：token 和用户 id 同时存在内存和本地缓存里，刷新页面或重新打开小程序都还在。
- * mock 阶段还没有登录，用户 id 默认是 1（mock 数据里的「小周」）；接入登录后由登录接口写入。
+ * 登录成功后由登录接口写入；没登录时 userId 默认是 1，只给 mock 数据用。
  */
 export const useUserStore = defineStore('user', () => {
   const token = ref<string>(uni.getStorageSync(TOKEN_KEY) || '')
   const userId = ref<number>(Number(uni.getStorageSync(USER_ID_KEY)) || 1)
+  const nickname = ref<string>(uni.getStorageSync(NICKNAME_KEY) || '')
 
-  function setLogin(newToken: string, id: number) {
+  function setLogin(newToken: string, id: number, name: string) {
     token.value = newToken
     userId.value = id
+    nickname.value = name
     uni.setStorageSync(TOKEN_KEY, newToken)
     uni.setStorageSync(USER_ID_KEY, id)
+    uni.setStorageSync(NICKNAME_KEY, name)
   }
 
   function logout() {
     token.value = ''
+    nickname.value = ''
     uni.removeStorageSync(TOKEN_KEY)
     uni.removeStorageSync(USER_ID_KEY)
+    uni.removeStorageSync(NICKNAME_KEY)
   }
 
-  return { token, userId, setLogin, logout }
+  return { token, userId, nickname, setLogin, logout }
 })

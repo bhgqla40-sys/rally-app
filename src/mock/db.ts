@@ -8,10 +8,24 @@ import { SPORT_TEXT } from '@/constants'
 import type { Bill, GameBrief, GameDetail, GameStatus, Group, Member, MyProfile, SignupRecord, SportType } from '@/types'
 import { weekdayText } from '@/utils/format'
 
-export const ME: Member = { id: 1, nickname: '小周' }
+/**
+ * mock 数据里的「我」。
+ * 联调过渡期：跟着真实登录的用户走（id、昵称），这样还没接后端的页面里，「我」和登录的是同一个人。
+ * 所有接口都接上后端后，整个 mock 目录可以删掉。
+ */
+export const ME: Member = {
+  id: Number(uni.getStorageSync('userId')) || 1,
+  nickname: uni.getStorageSync('nickname') || '小周',
+}
+
+/** 登录成功后调用：把 mock 里的「我」换成真实用户 */
+export function syncMockUser(id: number, nickname: string) {
+  ME.id = id
+  ME.nickname = nickname
+}
 
 const NAMES = ['阿杰', '李娜', '王强', '刘洋', '陈晨', '杨帆', '赵磊', '周婷', '孙悦', '马超', '黄磊', '林夕', '何雨', '罗佳', '高远', '许诺', '唐果', '宋雨', '韩冬', '冯雪']
-export const PEOPLE: Member[] = NAMES.map((nickname, i) => ({ id: i + 2, nickname }))
+export const PEOPLE: Member[] = NAMES.map((nickname, i) => ({ id: 1001 + i, nickname }))
 const person = (name: string) => PEOPLE.find((p) => p.nickname === name)!
 const people = (from: number, count: number) => PEOPLE.slice(from, from + count)
 
