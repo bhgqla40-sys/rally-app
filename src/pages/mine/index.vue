@@ -90,10 +90,6 @@ function go(url: string) {
   uni.navigateTo({ url })
 }
 
-function comingSoon() {
-  toast.info('这个功能下个版本上线')
-}
-
 async function logout() {
   try {
     await message.confirm({ title: '退出登录？', confirmButtonText: '退出', cancelButtonText: '取消' })
@@ -105,8 +101,8 @@ async function logout() {
 }
 
 const menus = computed(() => [
-  { title: '待付款', icon: 'money-circle', badge: profile.value?.pendingBillCount ? `${profile.value.pendingBillCount} 笔` : '', onClick: comingSoon },
-  { title: '我的报名记录', icon: 'list', badge: '', onClick: comingSoon },
+  { title: '待付款', icon: 'money-circle', badge: profile.value?.pendingBillCount ? `${profile.value.pendingBillCount} 笔` : '', onClick: () => go('/pages/mine/bills') },
+  { title: '我的报名记录', icon: 'list', badge: '', onClick: () => go('/pages/mine/signups') },
   { title: '输入邀请码加入群组', icon: 'usergroup-add', badge: '', onClick: () => go('/pages/group/join') },
   { title: '退出登录', icon: 'logout', badge: '', onClick: logout },
 ])

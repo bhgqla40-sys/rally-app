@@ -5,7 +5,7 @@
  */
 import dayjs from 'dayjs'
 import { SPORT_TEXT } from '@/constants'
-import type { Bill, GameBrief, GameDetail, GameStatus, Group, Member, MyProfile, SportType } from '@/types'
+import type { Bill, GameBrief, GameDetail, GameStatus, Group, Member, MyProfile, SignupRecord, SportType } from '@/types'
 import { weekdayText } from '@/utils/format'
 
 export const ME: Member = { id: 1, nickname: '小周' }
@@ -98,7 +98,9 @@ const otherGroups: Group[] = [
 ]
 
 const games: GameDetail[] = [
-  // 已结束：用来演示费用结算（我是组织者）
+  // 已结束：我是普通成员，账单还没付（用来演示「待付款」）
+  makeGame({ id: 99, groupId: 1, sport: 'BADMINTON', dayOffset: -6, start: '19:00', durationMinutes: 120, venue: '市体育中心 3 号馆', capacity: 12, organizer: person('阿杰'), joined: [...people(0, 9), ME], feePerPerson: 3900 }),
+  // 已结束：我是组织者（用来演示费用结算）
   makeGame({ id: 100, groupId: 2, sport: 'FOOTBALL', dayOffset: -2, start: '20:00', durationMinutes: 120, venue: '星光五人制球场 B 场', capacity: 14, organizer: ME, joined: [ME, ...people(0, 11)], feePerPerson: 3500 }),
   // 已报名
   makeGame({ id: 101, groupId: 1, sport: 'BADMINTON', dayOffset: 1, start: '19:00', durationMinutes: 120, venue: '市体育中心 3 号馆', capacity: 12, organizer: person('阿杰'), joined: [...people(0, 8), ME], feePerPerson: 3500 }),
@@ -113,7 +115,27 @@ const games: GameDetail[] = [
 const bills: Bill[] = (() => {
   const game = games.find((g) => g.id === 100)!
   const perPerson = 3500
+  const badminton = games.find((g) => g.id === 99)!
   return [
+    {
+      id: 202,
+      gameId: badminton.id,
+      gameTitle: badminton.title,
+      gameStartAt: badminton.startAt,
+      groupName: badminton.groupName,
+      items: [
+        { id: 1, name: '场地费（3 片场 × 2 小时）', amount: 30000 },
+        { id: 2, name: '用球（1 桶）', amount: 9000 },
+      ],
+      members: badminton.joined.map((m, i) => ({
+        member: m,
+        amount: 3900,
+        isOrganizer: m.id === badminton.organizer.id,
+        // 组织者和前 6 个人付了，我没付
+        paid: m.id !== ME.id && i < 7,
+        paidAt: m.id !== ME.id && i < 7 ? dayjs(badminton.endAt).add(i * 9, 'minute').format() : undefined,
+      })),
+    },
     {
       id: 201,
       gameId: game.id,
@@ -135,6 +157,26 @@ const bills: Bill[] = (() => {
   ]
 })()
 
+/** 更早的报名记录（这些场次的详情不在 mock 里，只展示在「我的报名记录」） */
+const historyRecords: SignupRecord[] = [
+  { offset: -9, start: '20:00', title: '下班踢球小分队', sport: 'FOOTBALL' as SportType, venue: '星光五人制球场 B 场', status: 'ATTENDED' as const },
+  { offset: -13, start: '19:00', title: '星火羽毛球群', sport: 'BADMINTON' as SportType, venue: '市体育中心 3 号馆', status: 'NO_SHOW' as const },
+  { offset: -16, start: '20:00', title: '下班踢球小分队', sport: 'FOOTBALL' as SportType, venue: '星光五人制球场 B 场', status: 'CANCELLED' as const },
+  { offset: -20, start: '19:00', title: '星火羽毛球群', sport: 'BADMINTON' as SportType, venue: '市体育中心 3 号馆', status: 'ATTENDED' as const },
+].map((r, i) => {
+  const [h, m] = r.start.split(':').map(Number)
+  const start = dayjs().startOf('day').add(r.offset, 'day').hour(h).minute(m)
+  return {
+    gameId: 90 - i,
+    title: gameTitle(start, r.sport),
+    groupName: r.title,
+    venue: r.venue,
+    startAt: start.format(),
+    endAt: start.add(120, 'minute').format(),
+    status: r.status,
+  }
+})
+
 const profile: MyProfile = {
   ...ME,
   groupCount: groups.length,
@@ -144,7 +186,7 @@ const profile: MyProfile = {
   pendingBillCount: 1,
 }
 
-export const db = { games, groups, otherGroups, bills, profile }
+export const db = { games, groups, otherGroups, bills, profile, historyRecords }
 
 /** 把数据库里的场次转成列表用的结构，人数、状态、我的报名情况都现算 */
 export function toBrief(g: GameDetail): GameBrief {

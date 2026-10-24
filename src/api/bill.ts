@@ -6,8 +6,8 @@
  * 保证每个人的应付金额加起来正好等于总费用。
  */
 import dayjs from 'dayjs'
-import { db } from '@/mock/db'
-import type { Bill, BillItem } from '@/types'
+import { ME, db } from '@/mock/db'
+import type { Bill, BillItem, PendingBill } from '@/types'
 import { ApiError } from '@/utils/request'
 import { mockRequest } from './mock'
 
@@ -85,6 +85,41 @@ export function setPaid(billId: number, memberId: number, paid: boolean): Promis
     if (!target) throw new ApiError(404, '这个人不在账单里')
     target.paid = paid
     target.paidAt = paid ? dayjs().format() : undefined
+    if (paid) target.claimedAt = undefined
     return bill
+  })
+}
+
+/** 我的待付款：我在账单里、还没付、也不是组织者 */
+export function fetchMyPendingBills(): Promise<PendingBill[]> {
+  // return http.get<PendingBill[]>('/users/me/pending-bills')
+  return mockRequest(() =>
+    db.bills.flatMap((b) => {
+      const mine = b.members.find((m) => m.member.id === ME.id)
+      const organizer = b.members.find((m) => m.isOrganizer)
+      if (!mine || mine.paid || mine.isOrganizer || !organizer) return []
+      return [
+        {
+          billId: b.id,
+          gameId: b.gameId,
+          gameTitle: b.gameTitle,
+          gameStartAt: b.gameStartAt,
+          groupName: b.groupName,
+          organizer: organizer.member,
+          amount: mine.amount,
+          claimedAt: mine.claimedAt,
+        },
+      ]
+    }),
+  )
+}
+
+/** 成员点「我已转账」：只是通知组织者，真正算已付要组织者确认 */
+export function claimPaid(billId: number): Promise<void> {
+  // return http.post<void>(`/bills/${billId}/claim`)
+  return mockRequest(() => {
+    const mine = findBill(billId).members.find((m) => m.member.id === ME.id)
+    if (!mine) throw new ApiError(404, '你不在这个账单里')
+    mine.claimedAt = dayjs().format()
   })
 }

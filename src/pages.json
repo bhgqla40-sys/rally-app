@@ -65,6 +65,19 @@
       }
     },
     {
+      "path": "pages/mine/signups",
+      "style": {
+        "navigationBarTitleText": "我的报名记录",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/mine/bills",
+      "style": {
+        "navigationBarTitleText": "待付款"
+      }
+    },
+    {
       "path": "pages/login/index",
       "style": {
         "navigationBarTitleText": "登录"

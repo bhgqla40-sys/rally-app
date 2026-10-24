@@ -73,6 +73,7 @@
             <text class="text-[15px] text-ink">{{ m.member.id === myId ? `${m.member.nickname}（我）` : m.member.nickname }}</text>
             <text v-if="m.isOrganizer" class="text-xs text-muted">组织者 · 已垫付全部费用</text>
             <text v-else-if="m.paid" class="text-xs text-muted">{{ m.paidAt ? `${formatDateTime(m.paidAt)} ` : '' }}已付 {{ formatMoney(m.amount) }}</text>
+            <text v-else-if="m.claimedAt" class="text-xs text-primary-ink">{{ formatDateTime(m.claimedAt) }} 说已转账，待确认</text>
             <text v-else class="text-xs text-warning-ink">未付 {{ formatMoney(m.amount) }}</text>
           </view>
           <text v-if="m.isOrganizer" class="rounded-full bg-line-soft px-2.5 text-xs leading-6 text-ink-2">无需转账</text>
