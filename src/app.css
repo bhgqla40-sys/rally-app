@@ -8,6 +8,49 @@
 @source not "../dist";
 @source not "../unpackage";
 
+/*
+ * 设计稿配色。定义后可以直接写 bg-primary、text-muted、border-line 这类类名。
+ * 带 -ink 的是"文字色"，带 -soft 的是"浅底色"，两两搭配都满足对比度要求。
+ */
+@theme {
+  --color-primary: #2F6BE6;
+  --color-primary-ink: #245FD9;
+  --color-primary-soft: #E9F0FD;
+
+  --color-success: #1F9D6B;
+  --color-success-ink: #157A52;
+  --color-success-soft: #E6F6EE;
+
+  --color-warning: #D97A2B;
+  --color-warning-ink: #A84B07;
+  --color-warning-soft: #FFF1E3;
+
+  --color-danger: #C62F3C;
+  --color-danger-soft: #FDECEE;
+
+  --color-purple-ink: #5B33B8;
+  --color-purple-soft: #F1ECFD;
+
+  --color-ink: #1A1A1A;
+  --color-ink-2: #4A4A4A;
+  --color-muted: #5C5C5C;
+  --color-line: #E8E9ED;
+  --color-line-soft: #F0F1F4;
+  --color-seat: #B8BCC6;
+  --color-canvas: #F5F6F8;
+}
+
+/* wot-design-uni 的主题变量：组件库的按钮、开关、进度条等统一换成设计稿的颜色 */
+page,
+:root {
+  --wot-color-theme: #2F6BE6;
+  --wot-color-success: #1F9D6B;
+  --wot-color-warning: #D97A2B;
+  --wot-color-danger: #C62F3C;
+  background-color: #F5F6F8;
+  color: #1A1A1A;
+}
+
 @layer base {
   /* #ifdef H5 */
   /* Tailwind 的样式重置会把 svg 设成 block，H5 下图标可能错位，这里改回来 */
