@@ -99,31 +99,32 @@ function makeGame(seed: GameSeed): GameDetail {
   return game
 }
 
+/** mock 群组的 id 从 9001 开始，避免和后端真实群组的 id 撞上 */
 const groups: Group[] = [
-  { id: 1, name: '星火羽毛球群', sport: 'BADMINTON', memberCount: 32, myRole: 'MEMBER', scheduleText: '', inviteCode: 'XH2026' },
-  { id: 2, name: '下班踢球小分队', sport: 'FOOTBALL', memberCount: 20, myRole: 'OWNER', scheduleText: '', inviteCode: 'TQ8848' },
-  { id: 3, name: '周末篮球局', sport: 'BASKETBALL', memberCount: 18, myRole: 'MEMBER', scheduleText: '', inviteCode: 'LQ0603' },
-  { id: 4, name: '飞盘新手群', sport: 'FRISBEE', memberCount: 45, myRole: 'MEMBER', scheduleText: '', inviteCode: 'FP1314' },
+  { id: 9001, name: '星火羽毛球群', sport: 'BADMINTON', memberCount: 32, myRole: 'MEMBER', scheduleText: '', inviteCode: 'XH2026' },
+  { id: 9002, name: '下班踢球小分队', sport: 'FOOTBALL', memberCount: 20, myRole: 'OWNER', scheduleText: '', inviteCode: 'TQ8848' },
+  { id: 9003, name: '周末篮球局', sport: 'BASKETBALL', memberCount: 18, myRole: 'MEMBER', scheduleText: '', inviteCode: 'LQ0603' },
+  { id: 9004, name: '飞盘新手群', sport: 'FRISBEE', memberCount: 45, myRole: 'MEMBER', scheduleText: '', inviteCode: 'FP1314' },
 ]
 
-/** 我还没加入的群：用来演示「输入邀请码加入群组」，邀请码 RUN888 */
+/** mock 里我还没加入的群（群组接口已接后端，这里只剩给 mock 场次用） */
 const otherGroups: Group[] = [
-  { id: 9, name: '周二夜跑团', sport: 'OTHER', memberCount: 26, myRole: 'MEMBER', scheduleText: '每周二', inviteCode: 'RUN888' },
+  { id: 9009, name: '周二夜跑团', sport: 'OTHER', memberCount: 26, myRole: 'MEMBER', scheduleText: '每周二', inviteCode: 'RUN888' },
 ]
 
 const games: GameDetail[] = [
   // 已结束：我是普通成员，账单还没付（用来演示「待付款」）
-  makeGame({ id: 99, groupId: 1, sport: 'BADMINTON', dayOffset: -6, start: '19:00', durationMinutes: 120, venue: '市体育中心 3 号馆', capacity: 12, organizer: person('阿杰'), joined: [...people(0, 9), ME], feePerPerson: 3900 }),
+  makeGame({ id: 99, groupId: 9001, sport: 'BADMINTON', dayOffset: -6, start: '19:00', durationMinutes: 120, venue: '市体育中心 3 号馆', capacity: 12, organizer: person('阿杰'), joined: [...people(0, 9), ME], feePerPerson: 3900 }),
   // 已结束：我是组织者（用来演示费用结算）
-  makeGame({ id: 100, groupId: 2, sport: 'FOOTBALL', dayOffset: -2, start: '20:00', durationMinutes: 120, venue: '星光五人制球场 B 场', capacity: 14, organizer: ME, joined: [ME, ...people(0, 11)], feePerPerson: 3500 }),
+  makeGame({ id: 100, groupId: 9002, sport: 'FOOTBALL', dayOffset: -2, start: '20:00', durationMinutes: 120, venue: '星光五人制球场 B 场', capacity: 14, organizer: ME, joined: [ME, ...people(0, 11)], feePerPerson: 3500 }),
   // 已报名
-  makeGame({ id: 101, groupId: 1, sport: 'BADMINTON', dayOffset: 1, start: '19:00', durationMinutes: 120, venue: '市体育中心 3 号馆', capacity: 12, organizer: person('阿杰'), joined: [...people(0, 8), ME], feePerPerson: 3500 }),
+  makeGame({ id: 101, groupId: 9001, sport: 'BADMINTON', dayOffset: 1, start: '19:00', durationMinutes: 120, venue: '市体育中心 3 号馆', capacity: 12, organizer: person('阿杰'), joined: [...people(0, 8), ME], feePerPerson: 3500 }),
   // 可报名
-  makeGame({ id: 102, groupId: 2, sport: 'FOOTBALL', dayOffset: 2, start: '20:00', durationMinutes: 120, venue: '星光五人制球场 B 场', capacity: 14, organizer: ME, joined: people(8, 6), feePerPerson: 3000 }),
+  makeGame({ id: 102, groupId: 9002, sport: 'FOOTBALL', dayOffset: 2, start: '20:00', durationMinutes: 120, venue: '星光五人制球场 B 场', capacity: 14, organizer: ME, joined: people(8, 6), feePerPerson: 3000 }),
   // 满员，我在候补
-  makeGame({ id: 103, groupId: 3, sport: 'BASKETBALL', dayOffset: 3, start: '09:00', durationMinutes: 120, venue: '城东篮球公园 2 号场', capacity: 10, organizer: person('马超'), joined: people(3, 10), waitlist: [ME, person('罗佳')], feePerPerson: 2500, openDaysBefore: 5 }),
+  makeGame({ id: 103, groupId: 9003, sport: 'BASKETBALL', dayOffset: 3, start: '09:00', durationMinutes: 120, venue: '城东篮球公园 2 号场', capacity: 10, organizer: person('马超'), joined: people(3, 10), waitlist: [ME, person('罗佳')], feePerPerson: 2500, openDaysBefore: 5 }),
   // 还没开放报名
-  makeGame({ id: 104, groupId: 4, sport: 'FRISBEE', dayOffset: 6, start: '19:30', durationMinutes: 90, venue: '滨江公园草坪', capacity: 16, organizer: person('林夕'), joined: [], feePerPerson: 2000 }),
+  makeGame({ id: 104, groupId: 9004, sport: 'FRISBEE', dayOffset: 6, start: '19:30', durationMinutes: 90, venue: '滨江公园草坪', capacity: 16, organizer: person('林夕'), joined: [], feePerPerson: 2000 }),
 ]
 
 /** 固定局：从每个群接下来的那一场反推出来 */

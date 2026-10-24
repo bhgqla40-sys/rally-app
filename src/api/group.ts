@@ -1,10 +1,11 @@
 /**
  * 群组相关接口。
- * 现在用 mock 数据；后端完成后换成注释里的 http 调用即可。
+ * - fetchMyGroups / fetchGroupDetail / joinGroupByCode / createGroup  ✅ 已接入后端（rally-server：GroupController）
+ * - 群组管理（下面那一段）还是 mock，后端做完后换成注释里的 http 调用
  */
-import { ME, db, membersOf, toBrief } from '@/mock/db'
+import { ME, db, membersOf } from '@/mock/db'
 import type { GameBrief, Group, GroupMember, GroupRole, Member } from '@/types'
-import { ApiError } from '@/utils/request'
+import { ApiError, http } from '@/utils/request'
 import { mockRequest } from './mock'
 
 export interface GroupDetail extends Group {
@@ -19,77 +20,33 @@ export interface GroupDetail extends Group {
 
 /** 我加入的群组 */
 export function fetchMyGroups(): Promise<Group[]> {
-  // return http.get<Group[]>('/groups/mine')
-  return mockRequest(() => db.groups)
+  return http.get<Group[]>('/groups/mine')
 }
 
 /** 群组详情 */
 export function fetchGroupDetail(id: number): Promise<GroupDetail> {
-  // return http.get<GroupDetail>(`/groups/${id}`)
-  return mockRequest(() => {
-    const group = db.groups.find((g) => g.id === id)
-    if (!group) throw new ApiError(404, '群组不存在')
-    const games = db.games.filter((g) => g.groupId === id)
-    const members = membersOf(id)
-    return {
-      ...group,
-      owner: members.find((m) => m.role === 'OWNER')!.member,
-      members: members.slice(0, 10).map((m) => m.member),
-      upcomingGames: games
-        .map(toBrief)
-        .filter((g) => g.status !== 'FINISHED' && g.status !== 'CANCELLED')
-        .sort((a, b) => a.startAt.localeCompare(b.startAt)),
-      recentFinishedGames: games
-        .map(toBrief)
-        .filter((g) => g.status === 'FINISHED')
-        .sort((a, b) => b.startAt.localeCompare(a.startAt))
-        .slice(0, 3),
-    }
-  })
+  return http.get<GroupDetail>(`/groups/${id}`)
 }
 
 /** 用邀请码加入群组 */
 export function joinGroupByCode(code: string): Promise<Group> {
-  // return http.post<Group>('/groups/join', { code })
-  return mockRequest(() => {
-    const normalized = code.trim().toUpperCase()
-    const joined = db.groups.find((g) => g.inviteCode === normalized)
-    if (joined) throw new ApiError(400, `你已经在「${joined.name}」里了`)
-    const index = db.otherGroups.findIndex((g) => g.inviteCode === normalized)
-    if (index < 0) throw new ApiError(404, '邀请码不正确，请向群主确认')
-    const [group] = db.otherGroups.splice(index, 1)
-    group.memberCount += 1
-    db.groups.push(group)
-    db.profile.groupCount = db.groups.length
-    return group
-  })
+  return http.post<Group>('/groups/join', { code })
 }
 
 /** 创建群组 */
 export function createGroup(name: string, sport: Group['sport']): Promise<Group> {
-  // return http.post<Group>('/groups', { name, sport })
-  return mockRequest(() => {
-    const group: Group = {
-      id: Math.max(...db.groups.map((g) => g.id)) + 1,
-      name,
-      sport,
-      memberCount: 1,
-      myRole: 'OWNER',
-      scheduleText: '还没有固定局',
-      inviteCode: Math.random().toString(36).slice(2, 8).toUpperCase(),
-    }
-    db.groups.push(group)
-    db.profile.groupCount = db.groups.length
-    return group
-  })
+  return http.post<Group>('/groups', { name, sport })
 }
 
 // ---------------- 群组管理（群主 / 管理员） ----------------
 
 /** 我能管理这个群吗：群主和管理员可以 */
+/** 群组管理接口后端还没做：真实群组在 mock 里找不到，给一个明确的提示 */
+const NOT_READY = '群组管理接口后端还在开发中'
+
 function findManagedGroup(id: number) {
   const group = db.groups.find((g) => g.id === id)
-  if (!group) throw new ApiError(404, '群组不存在')
+  if (!group) throw new ApiError(501, NOT_READY)
   if (group.myRole === 'MEMBER') throw new ApiError(403, '只有群主和管理员可以操作')
   return group
 }
@@ -97,7 +54,10 @@ function findManagedGroup(id: number) {
 /** 群成员名单（带角色） */
 export function fetchGroupMembers(groupId: number): Promise<GroupMember[]> {
   // return http.get<GroupMember[]>(`/groups/${groupId}/members`)
-  return mockRequest(() => membersOf(groupId))
+  return mockRequest(() => {
+    if (!db.groups.some((g) => g.id === groupId)) throw new ApiError(501, NOT_READY)
+    return membersOf(groupId)
+  })
 }
 
 /** 修改群名称 */

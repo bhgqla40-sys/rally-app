@@ -5,16 +5,19 @@
     </view>
 
     <view v-else class="flex flex-col gap-3 pt-3 pb-10">
+      <view v-if="notReady" class="mx-4 rounded-xl bg-warning-soft px-4 py-3 text-[13px] leading-5 text-warning-ink">
+        改群名、重新生成邀请码、成员管理这些功能，后端还在开发中，现在只能查看。
+      </view>
       <!-- 基本信息 -->
       <wd-cell-group title="基本信息" insert>
-        <wd-input v-model="name" label="群名称" :maxlength="20" clearable />
+        <wd-input v-model="name" label="群名称" :maxlength="20" :readonly="notReady" :clearable="!notReady" />
         <view v-if="nameChanged" class="px-4 pb-3">
           <wd-button block size="small" :loading="savingName" @click="saveName">保存群名称</wd-button>
         </view>
         <wd-cell title="邀请码" center>
           <view class="flex items-center gap-3">
             <text class="text-base font-bold tracking-[2px] text-ink">{{ group.inviteCode }}</text>
-            <text class="text-sm text-primary" @click="onResetCode">重新生成</text>
+            <text v-if="!notReady" class="text-sm text-primary" @click="onResetCode">重新生成</text>
           </view>
         </wd-cell>
       </wd-cell-group>
@@ -94,12 +97,21 @@ const myId = computed(() => userStore.userId)
 const isOwner = computed(() => group.value?.myRole === 'OWNER')
 const nameChanged = computed(() => !!group.value && name.value.trim() !== '' && name.value.trim() !== group.value.name)
 
+/** 群组管理接口后端还没做完时为 true：成员名单用详情里的预览代替，管理操作先隐藏 */
+const notReady = ref(false)
+
 async function load() {
-  const [g, m, t] = await Promise.all([fetchGroupDetail(groupId), fetchGroupMembers(groupId), fetchGroupTemplates(groupId)])
+  const g = await fetchGroupDetail(groupId)
   group.value = g
-  members.value = m
-  templates.value = t
   name.value = g.name
+  try {
+    members.value = await fetchGroupMembers(groupId)
+    notReady.value = false
+  } catch {
+    notReady.value = true
+    members.value = g.members.map((member) => ({ member, role: member.id === g.owner.id ? 'OWNER' : 'MEMBER', joinedAt: '' }))
+  }
+  templates.value = await fetchGroupTemplates(groupId).catch(() => [])
 }
 
 onLoad((query) => {
@@ -151,7 +163,7 @@ function createTemplate() {
 
 /** 群主可以操作除自己外的所有人；管理员只能操作普通成员 */
 function canManage(m: GroupMember) {
-  if (m.member.id === myId.value || m.role === 'OWNER') return false
+  if (notReady.value || m.member.id === myId.value || m.role === 'OWNER') return false
   return isOwner.value || m.role === 'MEMBER'
 }
 

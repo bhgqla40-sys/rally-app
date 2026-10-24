@@ -11,7 +11,6 @@
     </view>
 
     <wd-button block size="large" :loading="submitting" :disabled="code.trim().length < 6" @click="submit">加入</wd-button>
-    <text class="text-center text-xs text-muted">演示用的邀请码：RUN888</text>
 
     <wd-toast />
   </view>

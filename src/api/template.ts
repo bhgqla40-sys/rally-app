@@ -28,7 +28,7 @@ export function createGameTemplate(form: GameTemplateForm): Promise<{ firstGameI
   // return http.post<{ firstGameId: number }>('/game-templates', form)
   return mockRequest(() => {
     const group = db.groups.find((g) => g.id === form.groupId)
-    if (!group) throw new ApiError(404, '群组不存在')
+    if (!group) throw new ApiError(501, '固定局接口后端还在开发中')
     const [oh, om] = form.openTime.split(':').map(Number)
     const start = firstStart(form.weekday, form.startTime, form.deadlineHoursBefore)
     const game: GameDetail = {
