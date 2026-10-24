@@ -1,6 +1,12 @@
 <template>
   <view class="min-h-screen bg-canvas">
-    <view v-if="!game" class="flex justify-center py-24">
+    <view v-if="notFound" class="flex flex-col items-center gap-3 py-24">
+      <wd-icon name="calendar" size="48px" color="#B8BCC6" />
+      <text class="text-sm text-muted">这场球局不存在，可能已经被取消了</text>
+      <wd-button plain size="small" @click="goHome">回到首页</wd-button>
+    </view>
+
+    <view v-else-if="!game" class="flex justify-center py-24">
       <wd-loading />
     </view>
 
@@ -29,7 +35,7 @@
               <text>{{ deadlineText }}</text>
             </view>
             <view v-if="game.feePerPerson" class="flex items-center gap-2">
-              <wd-icon name="wallet" size="16px" color="#5C5C5C" />
+              <wd-icon name="money-circle" size="16px" color="#5C5C5C" />
               <text>{{ feeText }}</text>
             </view>
           </view>
@@ -145,9 +151,19 @@ const feeText = computed(() => {
   return g.feeMode === 'AA' ? `费用 AA，预计每人约 ${formatMoney(g.feePerPerson)}` : `每人 ${formatMoney(g.feePerPerson)}`
 })
 
+const notFound = ref(false)
+
 async function load() {
-  game.value = await fetchGameDetail(gameId)
-  uni.setNavigationBarTitle({ title: game.value.title })
+  try {
+    game.value = await fetchGameDetail(gameId)
+    uni.setNavigationBarTitle({ title: game.value.title })
+  } catch {
+    notFound.value = true
+  }
+}
+
+function goHome() {
+  uni.switchTab({ url: '/pages/index/index' })
 }
 
 onLoad((query) => {
@@ -170,7 +186,11 @@ async function onCancel() {
   try {
     await message.confirm({
       title: isWaitlist ? '退出候补？' : '取消报名？',
-      msg: isWaitlist ? '退出后需要重新排队' : '你的名额会自动让给候补第一位',
+      msg: isWaitlist
+        ? '退出后需要重新排队'
+        : game.value?.waitlistCount
+          ? '你的名额会自动让给候补第一位'
+          : '取消后名额会空出来，其他人可以报名',
       confirmButtonText: isWaitlist ? '退出候补' : '取消报名',
       cancelButtonText: '再想想',
     })

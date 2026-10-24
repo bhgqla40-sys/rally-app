@@ -1,6 +1,11 @@
 <template>
   <view class="min-h-screen bg-canvas">
-    <view v-if="!group" class="flex justify-center py-24">
+    <view v-if="notFound" class="flex flex-col items-center gap-3 py-24">
+      <wd-icon name="usergroup" size="48px" color="#B8BCC6" />
+      <text class="text-sm text-muted">这个群组不存在</text>
+    </view>
+
+    <view v-else-if="!group" class="flex justify-center py-24">
       <wd-loading />
     </view>
 
@@ -42,12 +47,12 @@
         <view
           v-for="g in group.recentFinishedGames"
           :key="g.id"
-          class="flex h-[52px] items-center gap-3 border-t border-line-soft"
+          class="flex min-h-[56px] items-center gap-3 border-t border-line-soft py-2"
           @click="openBill(g.id)"
         >
           <view class="flex min-w-0 flex-1 flex-col gap-0.5">
             <text class="truncate text-[15px] text-ink">{{ g.title }}</text>
-            <text class="text-xs text-muted">{{ formatGameTime(g.startAt, g.endAt) }} · {{ g.joinedCount }} 人到场</text>
+            <text class="truncate text-xs text-muted">{{ formatDateTime(g.startAt) }} · {{ g.joinedCount }} 人到场</text>
           </view>
           <text class="text-sm font-medium text-primary">结算费用</text>
           <wd-icon name="arrow-right" size="16px" color="#2F6BE6" />
@@ -84,7 +89,7 @@ import { useToast } from 'wot-design-uni'
 import { joinGame } from '@/api/game'
 import { fetchGroupDetail, type GroupDetail } from '@/api/group'
 import { useUserStore } from '@/stores/user'
-import { formatGameTime } from '@/utils/format'
+import { formatDateTime } from '@/utils/format'
 
 const toast = useToast()
 const userStore = useUserStore()
@@ -94,9 +99,15 @@ let groupId = 0
 const myId = computed(() => userStore.userId)
 const isManager = computed(() => group.value?.myRole === 'OWNER' || group.value?.myRole === 'ADMIN')
 
+const notFound = ref(false)
+
 async function load() {
-  group.value = await fetchGroupDetail(groupId)
-  uni.setNavigationBarTitle({ title: group.value.name })
+  try {
+    group.value = await fetchGroupDetail(groupId)
+    uni.setNavigationBarTitle({ title: group.value.name })
+  } catch {
+    notFound.value = true
+  }
 }
 
 onLoad((query) => {

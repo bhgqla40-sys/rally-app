@@ -10,13 +10,16 @@ import { ApiError } from '@/utils/request'
 import { weekdayText } from '@/utils/format'
 import { mockRequest } from './mock'
 
-/** 下一次开局时间：本周这一天还没到就是本周，否则是下周 */
-function nextStart(weekday: number, startTime: string) {
+/**
+ * 第一场的开局时间：取最近一个「还来得及报名」的日子。
+ * 比如今天就是周六，但已经过了截止时间，那第一场就排到下周六。
+ */
+function firstStart(weekday: number, startTime: string, deadlineHoursBefore: number) {
   const [h, m] = startTime.split(':').map(Number)
   const now = dayjs()
   const todayWeekday = now.day() === 0 ? 7 : now.day()
   let start = now.startOf('day').add(weekday - todayWeekday, 'day').hour(h).minute(m)
-  if (!start.isAfter(now)) start = start.add(7, 'day')
+  while (!start.subtract(deadlineHoursBefore, 'hour').isAfter(now)) start = start.add(7, 'day')
   return start
 }
 
@@ -27,7 +30,7 @@ export function createGameTemplate(form: GameTemplateForm): Promise<{ firstGameI
     const group = db.groups.find((g) => g.id === form.groupId)
     if (!group) throw new ApiError(404, '群组不存在')
     const [oh, om] = form.openTime.split(':').map(Number)
-    const start = nextStart(form.weekday, form.startTime)
+    const start = firstStart(form.weekday, form.startTime, form.deadlineHoursBefore)
     const game: GameDetail = {
       id: Math.max(...db.games.map((g) => g.id)) + 1,
       title: form.name || `${weekdayText(start)}${SPORT_TEXT[form.sport]}`,

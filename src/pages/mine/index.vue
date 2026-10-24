@@ -105,7 +105,7 @@ async function logout() {
 }
 
 const menus = computed(() => [
-  { title: '待付款', icon: 'wallet', badge: profile.value?.pendingBillCount ? `${profile.value.pendingBillCount} 笔` : '', onClick: comingSoon },
+  { title: '待付款', icon: 'money-circle', badge: profile.value?.pendingBillCount ? `${profile.value.pendingBillCount} 笔` : '', onClick: comingSoon },
   { title: '我的报名记录', icon: 'list', badge: '', onClick: comingSoon },
   { title: '输入邀请码加入群组', icon: 'usergroup-add', badge: '', onClick: () => go('/pages/group/join') },
   { title: '退出登录', icon: 'logout', badge: '', onClick: logout },

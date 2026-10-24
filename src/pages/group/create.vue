@@ -8,7 +8,7 @@
           <view
             v-for="s in SPORT_OPTIONS"
             :key="s.value"
-            class="h-9 rounded-full border border-solid px-3.5 text-sm leading-[34px]"
+            class="h-9 rounded-full border border-solid px-3 text-sm leading-[34px]"
             :class="sport === s.value ? 'border-primary bg-primary-soft font-semibold text-primary-ink' : 'border-line bg-white text-ink'"
             @click="sport = s.value"
           >

@@ -17,6 +17,11 @@ export interface GroupDetail extends Group {
   recentFinishedGames: GameBrief[]
 }
 
+function rotate<T>(list: T[], offset: number) {
+  const n = offset % list.length
+  return [...list.slice(n), ...list.slice(0, n)]
+}
+
 /** 我加入的群组 */
 export function fetchMyGroups(): Promise<Group[]> {
   // return http.get<Group[]>('/groups/mine')
@@ -34,7 +39,8 @@ export function fetchGroupDetail(id: number): Promise<GroupDetail> {
     return {
       ...group,
       owner,
-      members: [owner, ...PEOPLE.filter((p) => p.id !== owner.id).slice(id * 2, id * 2 + 9)],
+      // mock：按群 id 轮换取 9 个人，让每个群的成员看起来不一样
+      members: [owner, ...rotate(PEOPLE.filter((p) => p.id !== owner.id), id * 3).slice(0, 9)],
       upcomingGames: games
         .map(toBrief)
         .filter((g) => g.status !== 'FINISHED' && g.status !== 'CANCELLED')

@@ -1,5 +1,5 @@
 <template>
-  <view class="min-h-screen bg-canvas pt-1 pb-28">
+  <view class="flex min-h-screen flex-col gap-3 bg-canvas pt-3 pb-28">
     <wd-cell-group title="基本信息" insert>
       <wd-cell title="所属群组" :value="groupName" />
       <wd-input v-model="form.name" label="名称" placeholder="例如：周六晚羽毛球" :maxlength="20" clearable />
@@ -9,7 +9,7 @@
           <view
             v-for="s in SPORT_OPTIONS"
             :key="s.value"
-            class="h-9 rounded-full border border-solid px-3.5 text-sm leading-[34px]"
+            class="h-9 rounded-full border border-solid px-3 text-sm leading-[34px]"
             :class="form.sport === s.value ? 'border-primary bg-primary-soft font-semibold text-primary-ink' : 'border-line bg-white text-ink'"
             @click="form.sport = s.value"
           >

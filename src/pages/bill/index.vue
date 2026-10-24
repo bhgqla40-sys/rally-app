@@ -1,6 +1,11 @@
 <template>
   <view class="min-h-screen bg-canvas">
-    <view v-if="!bill" class="flex justify-center py-24">
+    <view v-if="notFound" class="flex flex-col items-center gap-3 py-24">
+      <wd-icon name="money-circle" size="48px" color="#B8BCC6" />
+      <text class="text-sm text-muted">找不到这场的账单</text>
+    </view>
+
+    <view v-else-if="!bill" class="flex justify-center py-24">
       <wd-loading />
     </view>
 
@@ -142,15 +147,39 @@ const paidAmount = computed(() => bill.value?.members.filter((m) => m.paid).redu
 const paidPercent = computed(() => (total.value > 0 ? Math.round((paidAmount.value / total.value) * 100) : 0))
 const visibleMembers = computed(() => (onlyUnpaid.value ? unpaid.value : bill.value?.members ?? []))
 
+const notFound = ref(false)
+
 onLoad(async (query) => {
-  bill.value = await fetchBillByGame(Number(query?.gameId))
+  try {
+    bill.value = await fetchBillByGame(Number(query?.gameId))
+  } catch {
+    notFound.value = true
+  }
 })
+
+/** 已经有人付过钱时，改费用会让每人应付金额变化，先确认一下 */
+async function confirmChangeAfterPaid() {
+  const someonePaid = bill.value?.members.some((m) => m.paid && !m.isOrganizer)
+  if (!someonePaid) return true
+  try {
+    await message.confirm({
+      title: '已经有人付款了',
+      msg: '修改费用后每人应付金额会变化，已付的人需要补差价或退差价',
+      confirmButtonText: '继续修改',
+      cancelButtonText: '取消',
+    })
+    return true
+  } catch {
+    return false
+  }
+}
 
 async function onAddItem() {
   const name = newItem.name.trim()
   const amount = Math.round(Number(newItem.yuan) * 100)
   if (!name) return toast.warning('请填写名称')
   if (!(amount > 0)) return toast.warning('请填写正确的金额')
+  if (!(await confirmChangeAfterPaid())) return
   submitting.value = true
   try {
     bill.value = await addBillItem(bill.value!.id, { name, amount })
@@ -163,6 +192,7 @@ async function onAddItem() {
 }
 
 async function onRemoveItem(itemId: number) {
+  if (!(await confirmChangeAfterPaid())) return
   bill.value = await removeBillItem(bill.value!.id, itemId)
 }
 
