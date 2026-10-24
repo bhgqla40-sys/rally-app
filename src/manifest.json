@@ -8,9 +8,9 @@
   "h5" : {
     "title" : "组局助手"
   },
-  /* 微信小程序配置：appid 等注册好小程序后再填 */
+  /* 微信小程序配置：现在是测试号的 AppID，正式注册小程序后换成正式的 */
   "mp-weixin" : {
-    "appid" : "",
+    "appid" : "wxcb89d3816bee5566",
     "setting" : {
       "urlCheck" : false
     },

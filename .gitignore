@@ -22,3 +22,6 @@ dist
 
 # uni-app
 unpackage
+
+# 微信开发者工具的个人设置
+project.private.config.json
