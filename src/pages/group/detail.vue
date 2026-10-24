@@ -20,6 +20,10 @@
           </view>
           <text class="text-[13px] text-muted">{{ group.memberCount }} 人 · {{ group.scheduleText }} · 群主 {{ group.owner.nickname }}</text>
         </view>
+        <view v-if="isManager" class="flex h-11 shrink-0 items-center gap-0.5 text-sm font-medium text-primary" @click="goManage">
+          <text>管理</text>
+          <wd-icon name="arrow-right" size="14px" color="#2F6BE6" />
+        </view>
       </view>
 
       <!-- 邀请码 -->
@@ -143,6 +147,10 @@ function onRemind() {
 
 function openBill(gameId: number) {
   uni.navigateTo({ url: `/pages/bill/index?gameId=${gameId}` })
+}
+
+function goManage() {
+  uni.navigateTo({ url: `/pages/group/manage?id=${groupId}` })
 }
 
 function createTemplate() {

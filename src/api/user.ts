@@ -3,13 +3,20 @@
  * - fetchMyProfile  ✅ 已接入后端（rally-server：UserController）
  * - fetchMySignups  还是 mock，后端做完报名模块后换成注释里的 http 调用
  */
-import { db, toBrief } from '@/mock/db'
-import type { MyProfile, SignupRecord } from '@/types'
+import { ME, db, toBrief } from '@/mock/db'
+import type { GameStatus, MySignupStatus, MyProfile, SignupRecord, SignupRecordStatus } from '@/types'
 import { http } from '@/utils/request'
 import { mockRequest } from './mock'
 
 export function fetchMyProfile(): Promise<MyProfile> {
   return http.get<MyProfile>('/users/me')
+}
+
+/** 场次状态 + 我的报名状态 → 报名记录里显示的状态 */
+function recordStatus(status: GameStatus, mySignup: MySignupStatus, noShowIds?: number[]): SignupRecordStatus {
+  if (status === 'CANCELLED') return 'CANCELLED'
+  if (status === 'FINISHED') return noShowIds?.includes(ME.id) ? 'NO_SHOW' : 'ATTENDED'
+  return mySignup === 'WAITLIST' ? 'WAITLIST' : 'JOINED'
 }
 
 /** 报名记录：UPCOMING 还没结束的，HISTORY 已经结束的 */
@@ -28,7 +35,7 @@ export function fetchMySignups(scope: SignupScope): Promise<SignupRecord[]> {
         venue: g.venue,
         startAt: g.startAt,
         endAt: g.endAt,
-        status: g.status === 'FINISHED' ? 'ATTENDED' : g.mySignup === 'WAITLIST' ? 'WAITLIST' : 'JOINED',
+        status: recordStatus(g.status, g.mySignup, db.games.find((x) => x.id === g.id)?.noShowIds),
         waitlistRank: g.myWaitlistRank,
       }))
     const all = [...fromGames, ...db.historyRecords]

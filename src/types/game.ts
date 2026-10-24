@@ -50,6 +50,12 @@ export interface GameDetail extends GameBrief {
   waitlist: Member[]
   /** 群规，每条一句话 */
   rules: string[]
+  /** 被组织者取消时填写的原因 */
+  cancelReason?: string
+  /** 结束后组织者是否已经确认过出勤 */
+  attendanceConfirmed?: boolean
+  /** 组织者确认的「鸽子」名单（报了名但没来的人）；结算费用时不算他们 */
+  noShowIds?: number[]
 }
 
 /** 固定局规则（每周按这个规则自动生成场次） */
@@ -75,4 +81,21 @@ export interface GameTemplateForm {
   feeMode: FeeMode
   /** 固定收费时每人金额（分） */
   fixedFee?: number
+}
+
+/** 固定局（群组管理页的列表用） */
+export interface GameTemplateBrief {
+  id: number
+  groupId: number
+  name: string
+  sport: SportType
+  venue: string
+  /** 每周几：1 = 周一 … 7 = 周日 */
+  weekday: number
+  /** 开始时间，HH:mm */
+  startTime: string
+  durationMinutes: number
+  capacity: number
+  /** 暂停后不再每周自动开局，已经生成的场次不受影响 */
+  active: boolean
 }

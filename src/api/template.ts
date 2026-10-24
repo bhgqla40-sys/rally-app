@@ -5,7 +5,7 @@
 import dayjs from 'dayjs'
 import { SPORT_TEXT } from '@/constants'
 import { ME, db } from '@/mock/db'
-import type { GameDetail, GameTemplateForm } from '@/types'
+import type { GameDetail, GameTemplateBrief, GameTemplateForm } from '@/types'
 import { ApiError } from '@/utils/request'
 import { weekdayText } from '@/utils/format'
 import { mockRequest } from './mock'
@@ -57,7 +57,38 @@ export function createGameTemplate(form: GameTemplateForm): Promise<{ firstGameI
       rules: [`开局前 ${form.deadlineHoursBefore} 小时停止报名和取消`, '截止后临时请假，会记一次「鸽子」'],
     }
     db.games.push(game)
+    db.templates.push({
+      id: Math.max(0, ...db.templates.map((t) => t.id)) + 1,
+      groupId: group.id,
+      name: game.title,
+      sport: form.sport,
+      venue: form.venue,
+      weekday: form.weekday,
+      startTime: form.startTime,
+      durationMinutes: form.durationMinutes,
+      capacity: form.capacity,
+      active: true,
+    })
     group.scheduleText = `每${weekdayText(start)}`
     return { firstGameId: game.id }
+  })
+}
+
+/** 某个群的固定局列表 */
+export function fetchGroupTemplates(groupId: number): Promise<GameTemplateBrief[]> {
+  // return http.get<GameTemplateBrief[]>(`/groups/${groupId}/game-templates`)
+  return mockRequest(() => db.templates.filter((t) => t.groupId === groupId))
+}
+
+/** 暂停 / 恢复固定局：暂停后不再每周自动开局，已经生成的场次不受影响 */
+export function setTemplateActive(templateId: number, active: boolean): Promise<GameTemplateBrief> {
+  // return http.put<GameTemplateBrief>(`/game-templates/${templateId}`, { active })
+  return mockRequest(() => {
+    const template = db.templates.find((t) => t.id === templateId)
+    if (!template) throw new ApiError(404, '固定局不存在')
+    const group = db.groups.find((g) => g.id === template.groupId)
+    if (!group || group.myRole === 'MEMBER') throw new ApiError(403, '只有群主和管理员可以操作')
+    template.active = active
+    return template
   })
 }

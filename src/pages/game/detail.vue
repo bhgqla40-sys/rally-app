@@ -12,6 +12,20 @@
 
     <template v-else>
       <view class="flex flex-col gap-3 px-4 pt-3 pb-28">
+        <!-- 已取消 -->
+        <view v-if="game.status === 'CANCELLED'" class="flex flex-col gap-1 rounded-2xl bg-danger-soft p-4">
+          <text class="text-sm font-semibold text-danger">这一场已取消</text>
+          <text v-if="game.cancelReason" class="text-[13px] text-ink-2">原因：{{ game.cancelReason }}</text>
+        </view>
+
+        <!-- 组织者入口 -->
+        <view v-if="isOrganizer" class="flex items-center gap-2 rounded-2xl bg-primary-soft px-4 py-3" @click="goManage">
+          <wd-icon name="setting" size="18px" color="#245FD9" />
+          <text class="flex-1 text-sm text-primary-ink">你是这一场的组织者</text>
+          <text class="text-sm font-medium text-primary-ink">管理</text>
+          <wd-icon name="arrow-right" size="14px" color="#245FD9" />
+        </view>
+
         <!-- 场次信息 -->
         <view class="flex flex-col gap-3.5 rounded-2xl bg-white p-4">
           <view class="flex flex-col gap-1">
@@ -121,7 +135,7 @@
 </template>
 
 <script setup lang="ts">
-import { onLoad } from '@dcloudio/uni-app'
+import { onLoad, onShow } from '@dcloudio/uni-app'
 import { computed, ref } from 'vue'
 import { useMessage, useToast } from 'wot-design-uni'
 import { cancelSignup, fetchGameDetail, joinGame } from '@/api/game'
@@ -168,7 +182,11 @@ function goHome() {
 
 onLoad((query) => {
   gameId = Number(query?.id)
-  load()
+})
+
+// onShow：第一次进入和从管理页返回时都刷新
+onShow(() => {
+  if (gameId) load()
 })
 
 async function onJoin() {
@@ -212,6 +230,10 @@ function onShare() {
 
 function onRemind() {
   toast.info('开放报名时会提醒你')
+}
+
+function goManage() {
+  uni.navigateTo({ url: `/pages/game/manage?id=${gameId}` })
 }
 
 function goBill() {

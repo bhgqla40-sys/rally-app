@@ -5,7 +5,7 @@
  */
 import dayjs from 'dayjs'
 import { SPORT_TEXT } from '@/constants'
-import type { Bill, GameBrief, GameDetail, GameStatus, Group, Member, MyProfile, SignupRecord, SportType } from '@/types'
+import type { Bill, GameBrief, GameDetail, GameStatus, GameTemplateBrief, Group, GroupMember, Member, MyProfile, SignupRecord, SportType } from '@/types'
 import { weekdayText } from '@/utils/format'
 
 /**
@@ -126,6 +126,45 @@ const games: GameDetail[] = [
   makeGame({ id: 104, groupId: 4, sport: 'FRISBEE', dayOffset: 6, start: '19:30', durationMinutes: 90, venue: '滨江公园草坪', capacity: 16, organizer: person('林夕'), joined: [], feePerPerson: 2000 }),
 ]
 
+/** 固定局：从每个群接下来的那一场反推出来 */
+const templates: GameTemplateBrief[] = games
+  .filter((g) => [101, 102, 103, 104].includes(g.id))
+  .map((g, i) => {
+    const start = dayjs(g.startAt)
+    return {
+      id: 300 + i,
+      groupId: g.groupId,
+      name: g.title,
+      sport: g.sport,
+      venue: g.venue,
+      weekday: start.day() === 0 ? 7 : start.day(),
+      startTime: start.format('HH:mm'),
+      durationMinutes: dayjs(g.endAt).diff(start, 'minute'),
+      capacity: g.capacity,
+      active: true,
+    }
+  })
+
+function rotate<T>(list: T[], offset: number) {
+  const n = offset % list.length
+  return [...list.slice(n), ...list.slice(0, n)]
+}
+
+/** 每个群的成员名单，第一次用到时生成：群主 + 一位管理员 + 我 + 其他人 */
+const groupMembers: Record<number, GroupMember[]> = {}
+
+export function membersOf(groupId: number): GroupMember[] {
+  if (groupMembers[groupId]) return groupMembers[groupId]
+  const group = [...groups, ...otherGroups].find((g) => g.id === groupId)!
+  const owner = group.myRole === 'OWNER' ? ME : games.find((g) => g.groupId === groupId)?.organizer ?? PEOPLE[0]
+  const others = rotate(PEOPLE.filter((p) => p.id !== owner.id), groupId * 3).slice(0, 9)
+  const list: GroupMember[] = [{ member: owner, role: 'OWNER', joinedAt: dayjs().subtract(200, 'day').format() }]
+  others.forEach((m, i) => list.push({ member: m, role: i === 0 ? 'ADMIN' : 'MEMBER', joinedAt: dayjs().subtract(150 - i * 10, 'day').format() }))
+  if (owner.id !== ME.id) list.splice(2, 0, { member: ME, role: group.myRole, joinedAt: dayjs().subtract(60, 'day').format() })
+  groupMembers[groupId] = list
+  return list
+}
+
 const bills: Bill[] = (() => {
   const game = games.find((g) => g.id === 100)!
   const perPerson = 3500
@@ -200,7 +239,7 @@ const profile: MyProfile = {
   pendingBillCount: 1,
 }
 
-export const db = { games, groups, otherGroups, bills, profile, historyRecords }
+export const db = { games, groups, otherGroups, bills, profile, historyRecords, templates }
 
 /** 把数据库里的场次转成列表用的结构，人数、状态、我的报名情况都现算 */
 export function toBrief(g: GameDetail): GameBrief {

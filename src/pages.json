@@ -35,6 +35,12 @@
       }
     },
     {
+      "path": "pages/game/manage",
+      "style": {
+        "navigationBarTitleText": "管理这一场"
+      }
+    },
+    {
       "path": "pages/game/create",
       "style": {
         "navigationBarTitleText": "新建固定局"
@@ -50,6 +56,12 @@
       "path": "pages/group/detail",
       "style": {
         "navigationBarTitleText": "群组"
+      }
+    },
+    {
+      "path": "pages/group/manage",
+      "style": {
+        "navigationBarTitleText": "群组管理"
       }
     },
     {

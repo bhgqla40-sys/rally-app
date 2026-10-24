@@ -33,7 +33,7 @@ function findBill(id: number) {
   return bill
 }
 
-/** 某一场的账单；还没有就新建一个空账单（到场成员 = 报名名单） */
+/** 某一场的账单；还没有就新建一个空账单（到场成员 = 报名名单 - 鸽子） */
 export function fetchBillByGame(gameId: number): Promise<Bill> {
   // return http.get<Bill>(`/games/${gameId}/bill`)
   return mockRequest(() => {
@@ -48,7 +48,10 @@ export function fetchBillByGame(gameId: number): Promise<Bill> {
         gameStartAt: game.startAt,
         groupName: game.groupName,
         items: [],
-        members: game.joined.map((m) => ({ member: m, amount: 0, paid: m.id === game.organizer.id, isOrganizer: m.id === game.organizer.id })),
+        // 到场成员 = 报名名单 - 组织者确认的鸽子
+        members: game.joined
+          .filter((m) => !game.noShowIds?.includes(m.id))
+          .map((m) => ({ member: m, amount: 0, paid: m.id === game.organizer.id, isOrganizer: m.id === game.organizer.id })),
       }
       db.bills.push(bill)
     }

@@ -1,4 +1,4 @@
-import type { SportType } from './common'
+import type { Member, SportType } from './common'
 
 /** 我在群组里的角色 */
 export type GroupRole = 'OWNER' | 'ADMIN' | 'MEMBER'
@@ -13,4 +13,11 @@ export interface Group {
   /** 例如「每周六」，由固定局规则生成 */
   scheduleText: string
   inviteCode?: string
+}
+
+/** 群成员（群组管理页用） */
+export interface GroupMember {
+  member: Member
+  role: GroupRole
+  joinedAt: string
 }
