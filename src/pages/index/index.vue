@@ -1,37 +1,41 @@
 <template>
-  <view class="min-h-screen bg-[#f5f6f8] p-4">
-    <view class="mb-4">
-      <text class="block text-xl font-bold text-gray-900">本周球局</text>
-      <text class="mt-1 block text-sm text-gray-500">
-        环境检查页：卡片样式、标签、进度条、按钮都正常显示，就说明 Tailwind 和组件库配置成功
-      </text>
+  <view class="min-h-screen bg-canvas px-4 pt-3 pb-4">
+    <!-- 筛选 -->
+    <view class="flex gap-2">
+      <view
+        v-for="f in FILTERS"
+        :key="f.value"
+        class="h-9 rounded-full px-4 text-sm leading-9"
+        :class="filter === f.value ? 'bg-primary font-semibold text-white' : 'bg-white text-ink'"
+        @click="changeFilter(f.value)"
+      >
+        {{ f.label }}
+      </view>
     </view>
 
-    <view class="rounded-xl bg-white p-4 shadow-sm">
-      <view class="flex items-center justify-between">
-        <text class="text-base font-semibold text-gray-900">{{ game.title }}</text>
-        <wd-tag :type="isFull ? 'warning' : 'success'" plain>
-          {{ isFull ? '已满员' : '报名中' }}
-        </wd-tag>
-      </view>
+    <!-- 首次加载 -->
+    <view v-if="loading && games.length === 0" class="flex justify-center py-24">
+      <wd-loading />
+    </view>
 
-      <view class="mt-3 flex flex-col gap-1 text-sm text-gray-600">
-        <text>时间：{{ startText }}</text>
-        <text>地点：{{ game.venue }}</text>
-        <text>名额：{{ game.joined }} / {{ game.capacity }}</text>
-      </view>
+    <!-- 空状态 -->
+    <view v-else-if="games.length === 0" class="flex flex-col items-center gap-3 py-24">
+      <wd-icon name="calendar" size="48px" color="#B8BCC6" />
+      <text class="text-sm text-muted">{{ emptyText }}</text>
+    </view>
 
-      <view class="mt-3">
-        <wd-progress :percentage="percent" hide-text />
-      </view>
-
-      <view class="mt-4 flex gap-3">
-        <view class="w-1/2">
-          <wd-button block plain @click="onWaitlist">排候补</wd-button>
-        </view>
-        <view class="w-1/2">
-          <wd-button block :disabled="isFull" @click="onJoin">报名</wd-button>
-        </view>
+    <!-- 按周分组的球局列表 -->
+    <view v-else>
+      <view v-for="section in sections" :key="section.key" class="flex flex-col gap-3">
+        <text class="mt-4 text-[13px] text-muted">{{ section.label }}</text>
+        <game-card
+          v-for="g in section.games"
+          :key="g.id"
+          :game="g"
+          @open="openDetail"
+          @join="onJoin"
+          @remind="onRemind"
+        />
       </view>
     </view>
 
@@ -40,31 +44,81 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive } from 'vue'
-import dayjs from 'dayjs'
+import { onPullDownRefresh, onShow } from '@dcloudio/uni-app'
+import { computed, ref } from 'vue'
 import { useToast } from 'wot-design-uni'
+import { fetchGames, joinGame, type GameFilter } from '@/api/game'
+import type { GameBrief } from '@/types'
+import { startOfWeek, weekLabel } from '@/utils/format'
+
+const FILTERS: { label: string; value: GameFilter }[] = [
+  { label: '全部', value: 'ALL' },
+  { label: '我报名的', value: 'MINE' },
+  { label: '可报名', value: 'AVAILABLE' },
+]
 
 const toast = useToast()
+const filter = ref<GameFilter>('ALL')
+const games = ref<GameBrief[]>([])
+const loading = ref(false)
 
-// 演示用的假数据，接上后端后会换成接口返回的数据
-const game = reactive({
-  title: '周六晚羽毛球',
-  venue: '市体育中心 3 号馆',
-  startAt: dayjs().day(6).hour(19).minute(0).toISOString(),
-  joined: 9,
-  capacity: 12,
-})
-
-const startText = computed(() => dayjs(game.startAt).format('M月D日 HH:mm'))
-const percent = computed(() => Math.round((game.joined / game.capacity) * 100))
-const isFull = computed(() => game.joined >= game.capacity)
-
-function onJoin() {
-  game.joined++
-  toast.success('报名成功')
+async function load() {
+  loading.value = true
+  try {
+    games.value = await fetchGames(filter.value)
+  } finally {
+    loading.value = false
+  }
 }
 
-function onWaitlist() {
-  toast.info('已加入候补，有人取消会自动递补')
+// onShow：第一次进入和从详情页返回时都会刷新，保证报名状态是最新的
+onShow(load)
+
+onPullDownRefresh(async () => {
+  await load()
+  uni.stopPullDownRefresh()
+})
+
+function changeFilter(value: GameFilter) {
+  if (filter.value === value) return
+  filter.value = value
+  games.value = []
+  load()
+}
+
+/** 按「周」分组：本周、下周…… */
+const sections = computed(() => {
+  const map = new Map<string, { key: string; label: string; games: GameBrief[] }>()
+  for (const g of games.value) {
+    const weekStart = startOfWeek(g.startAt)
+    const key = weekStart.format('YYYY-MM-DD')
+    if (!map.has(key)) map.set(key, { key, label: weekLabel(weekStart), games: [] })
+    map.get(key)!.games.push(g)
+  }
+  return Array.from(map.values())
+})
+
+const emptyText = computed(
+  () =>
+    ({
+      ALL: '最近没有球局，去群组里看看吧',
+      MINE: '你还没有报名任何球局',
+      AVAILABLE: '暂时没有可以报名的球局',
+    })[filter.value],
+)
+
+function openDetail(id: number) {
+  uni.navigateTo({ url: `/pages/game/detail?id=${id}` })
+}
+
+async function onJoin(id: number) {
+  const detail = await joinGame(id)
+  toast.success(detail.mySignup === 'WAITLIST' ? '已加入候补' : '报名成功')
+  load()
+}
+
+function onRemind() {
+  // 小程序里会改成订阅消息；H5 先给个提示
+  toast.info('开放报名时会提醒你')
 }
 </script>
