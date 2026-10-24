@@ -1,0 +1,18 @@
+/* Tailwind 入口。注意：这个文件必须是纯 .css，不要改成 .scss */
+@import "tailwindcss";
+
+/* 只扫描业务源码里用到的类名，排除第三方代码和打包产物 */
+@source "./**/*.{html,js,ts,jsx,tsx,vue}";
+@source not "./uni_modules";
+@source not "../node_modules";
+@source not "../dist";
+@source not "../unpackage";
+
+@layer base {
+  /* #ifdef H5 */
+  /* Tailwind 的样式重置会把 svg 设成 block，H5 下图标可能错位，这里改回来 */
+  svg {
+    display: initial;
+  }
+  /* #endif */
+}

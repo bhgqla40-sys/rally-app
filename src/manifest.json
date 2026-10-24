@@ -1,0 +1,23 @@
+{
+  "name" : "组局助手",
+  "appid" : "",
+  "description" : "固定球局的报名、候补和 AA 记账工具",
+  "versionName" : "1.0.0",
+  "versionCode" : "100",
+  "transformPx" : false,
+  "h5" : {
+    "title" : "组局助手"
+  },
+  /* 微信小程序配置：appid 等注册好小程序后再填 */
+  "mp-weixin" : {
+    "appid" : "",
+    "setting" : {
+      "urlCheck" : false
+    },
+    "usingComponents" : true
+  },
+  "uniStatistics" : {
+    "enable" : false
+  },
+  "vueVersion" : "3"
+}
