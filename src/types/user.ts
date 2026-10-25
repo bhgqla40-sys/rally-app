@@ -3,6 +3,8 @@ export interface MyProfile {
   id: number
   nickname: string
   avatar?: string
+  /** 个人介绍 */
+  bio?: string
   groupCount: number
   monthAttendance: number
   totalAttendance: number

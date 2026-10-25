@@ -1,12 +1,13 @@
 /**
  * 固定局相关接口。
- * 现在用 mock 数据；后端完成后换成注释里的 http 调用即可。
+ * - fetchGroupTemplates / setTemplateActive  ✅ 已接入后端（rally-server：GameTemplateController）
+ * - createGameTemplate  还是 mock，后端做完场次模块后换成注释里的 http 调用
  */
 import dayjs from 'dayjs'
 import { SPORT_TEXT } from '@/constants'
 import { ME, db } from '@/mock/db'
 import type { GameDetail, GameTemplateBrief, GameTemplateForm } from '@/types'
-import { ApiError } from '@/utils/request'
+import { ApiError, http } from '@/utils/request'
 import { weekdayText } from '@/utils/format'
 import { mockRequest } from './mock'
 
@@ -76,19 +77,10 @@ export function createGameTemplate(form: GameTemplateForm): Promise<{ firstGameI
 
 /** 某个群的固定局列表 */
 export function fetchGroupTemplates(groupId: number): Promise<GameTemplateBrief[]> {
-  // return http.get<GameTemplateBrief[]>(`/groups/${groupId}/game-templates`)
-  return mockRequest(() => db.templates.filter((t) => t.groupId === groupId))
+  return http.get<GameTemplateBrief[]>(`/groups/${groupId}/game-templates`)
 }
 
-/** 暂停 / 恢复固定局：暂停后不再每周自动开局，已经生成的场次不受影响 */
+/** 暂停 / 恢复固定局（群主、管理员）：暂停后不再每周自动开局，已经生成的场次不受影响 */
 export function setTemplateActive(templateId: number, active: boolean): Promise<GameTemplateBrief> {
-  // return http.put<GameTemplateBrief>(`/game-templates/${templateId}`, { active })
-  return mockRequest(() => {
-    const template = db.templates.find((t) => t.id === templateId)
-    if (!template) throw new ApiError(404, '固定局不存在')
-    const group = db.groups.find((g) => g.id === template.groupId)
-    if (!group || group.myRole === 'MEMBER') throw new ApiError(403, '只有群主和管理员可以操作')
-    template.active = active
-    return template
-  })
+  return http.put<GameTemplateBrief>(`/game-templates/${templateId}`, { active })
 }
