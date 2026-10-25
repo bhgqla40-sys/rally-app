@@ -129,8 +129,8 @@ function copyInvite() {
 
   uni.setClipboardData({
     data: inviteCode,
-    showToast: false,
-    success: () => toast.success('邀请码已复制'),
+    // 交给平台显示唯一的复制成功提示，避免再叠加业务 toast。
+    showToast: true,
   })
 }
 

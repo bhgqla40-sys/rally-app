@@ -1,46 +1,48 @@
 <template>
-  <view class="min-h-screen bg-canvas px-4 pt-3 pb-4">
-    <!-- 筛选 -->
-    <view class="flex gap-2">
-      <view
-        v-for="f in FILTERS"
-        :key="f.value"
-        class="h-9 rounded-full px-4 text-sm leading-9"
-        :class="filter === f.value ? 'bg-primary font-semibold text-white' : 'bg-white text-ink'"
-        @click="changeFilter(f.value)"
-      >
-        {{ f.label }}
+  <tab-book-transition :direction="tabDirection" :play-key="tabPlayKey">
+    <view class="min-h-screen bg-canvas px-4 pt-3 pb-4">
+      <!-- 筛选 -->
+      <view class="flex gap-2">
+        <view
+          v-for="f in FILTERS"
+          :key="f.value"
+          class="h-9 rounded-full px-4 text-sm leading-9"
+          :class="filter === f.value ? 'bg-primary font-semibold text-white' : 'bg-white text-ink'"
+          @click="changeFilter(f.value)"
+        >
+          {{ f.label }}
+        </view>
       </view>
-    </view>
 
-    <!-- 首次加载 -->
-    <view v-if="loading && games.length === 0" class="flex justify-center py-24">
-      <wd-loading />
-    </view>
-
-    <!-- 空状态 -->
-    <view v-else-if="games.length === 0" class="flex flex-col items-center gap-3 py-24">
-      <wd-icon name="calendar" size="48px" color="#B8BCC6" />
-      <text class="text-sm text-muted">{{ emptyText }}</text>
-    </view>
-
-    <!-- 按周分组的球局列表 -->
-    <view v-else>
-      <view v-for="section in sections" :key="section.key" class="flex flex-col gap-3">
-        <text class="mt-4 text-[13px] text-muted">{{ section.label }}</text>
-        <game-card
-          v-for="g in section.games"
-          :key="g.id"
-          :game="g"
-          @open="openDetail"
-          @join="onJoin"
-          @remind="onRemind"
-        />
+      <!-- 首次加载 -->
+      <view v-if="loading && games.length === 0" class="flex justify-center py-24">
+        <wd-loading />
       </view>
-    </view>
 
-    <wd-toast />
-  </view>
+      <!-- 空状态 -->
+      <view v-else-if="games.length === 0" class="flex flex-col items-center gap-3 py-24">
+        <wd-icon name="calendar" size="48px" color="#B8BCC6" />
+        <text class="text-sm text-muted">{{ emptyText }}</text>
+      </view>
+
+      <!-- 按周分组的球局列表 -->
+      <view v-else>
+        <view v-for="section in sections" :key="section.key" class="flex flex-col gap-3">
+          <text class="mt-4 text-[13px] text-muted">{{ section.label }}</text>
+          <game-card
+            v-for="g in section.games"
+            :key="g.id"
+            :game="g"
+            @open="openDetail"
+            @join="onJoin"
+            @remind="onRemind"
+          />
+        </view>
+      </view>
+
+      <wd-toast />
+    </view>
+  </tab-book-transition>
 </template>
 
 <script setup lang="ts">
@@ -50,6 +52,7 @@ import { useToast } from 'wot-design-uni'
 import { fetchGames, joinGame, type GameFilter } from '@/api/game'
 import type { GameBrief } from '@/types'
 import { startOfWeek, weekLabel } from '@/utils/format'
+import { resolveTabBookDirection, type TabBookDirection } from '@/utils/tab-transition'
 
 const FILTERS: { label: string; value: GameFilter }[] = [
   { label: '全部', value: 'ALL' },
@@ -61,6 +64,8 @@ const toast = useToast()
 const filter = ref<GameFilter>('ALL')
 const games = ref<GameBrief[]>([])
 const loading = ref(false)
+const tabDirection = ref<TabBookDirection>('none')
+const tabPlayKey = ref(0)
 
 async function load() {
   loading.value = true
@@ -71,8 +76,14 @@ async function load() {
   }
 }
 
-// onShow：第一次进入和从详情页返回时都会刷新，保证报名状态是最新的
-onShow(load)
+// onShow：第一次进入和从详情页返回时都会刷新，保证报名状态是最新的。
+// 只有从另一个底部 tab 切入时才播放翻书动画。
+onShow(() => {
+  const direction = resolveTabBookDirection('pages/index/index')
+  tabDirection.value = direction
+  if (direction !== 'none') tabPlayKey.value += 1
+  load()
+})
 
 onPullDownRefresh(async () => {
   await load()
