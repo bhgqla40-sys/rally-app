@@ -32,7 +32,7 @@
           <text class="text-[13px] text-muted">邀请码</text>
           <text class="text-[22px] font-bold tracking-[4px] text-ink">{{ group.inviteCode }}</text>
         </view>
-        <wd-button plain icon="copy" @click="copyInvite">复制邀请</wd-button>
+        <wd-button plain icon="copy" @click="copyInvite">复制邀请码</wd-button>
       </view>
 
       <!-- 接下来的场次 -->
@@ -124,10 +124,13 @@ onShow(() => {
 })
 
 function copyInvite() {
-  const g = group.value!
+  const inviteCode = group.value?.inviteCode
+  if (!inviteCode) return
+
   uni.setClipboardData({
-    data: `邀请你加入「${g.name}」，在组局助手里输入邀请码 ${g.inviteCode} 就能加入`,
-    success: () => toast.success('邀请已复制'),
+    data: inviteCode,
+    showToast: false,
+    success: () => toast.success('邀请码已复制'),
   })
 }
 
