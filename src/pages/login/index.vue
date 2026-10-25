@@ -51,21 +51,20 @@
 
         <view class="card-scene">
           <view class="card-rotator" :class="{ 'card-rotator--flipped': mode === 'register' }">
+            <!-- 两面使用独立且常驻的输入节点，切换时只旋转卡片。 -->
             <view
-              v-for="face in MODES"
-              :key="face"
-              class="auth-card"
-              :class="[{ 'auth-card--active': mode === face }, `auth-card--${face}`]"
-              :aria-hidden="mode !== face"
-              :inert="mode !== face ? true : undefined"
+              class="auth-card auth-card--login"
+              :class="{ 'auth-card--active': mode === 'login' }"
+              :aria-hidden="mode !== 'login'"
+              :inert="mode !== 'login' ? true : undefined"
             >
               <view class="card-heading">
                 <view class="card-eyebrow">
-                  <view class="card-label"><view class="status-dot" /><text>{{ face === 'login' ? '球搭子，欢迎回来' : '新球搭子，即刻就位' }}</text></view>
-                  <text class="card-number">{{ face === 'login' ? '01' : '02' }} / RALLY</text>
+                  <view class="card-label"><view class="status-dot" /><text>球搭子，欢迎回来</text></view>
+                  <text class="card-number">01 / RALLY</text>
                 </view>
-                <text class="card-title">{{ face === 'login' ? '下一场，等你上场' : '从这里，组个好局' }}</text>
-                <text class="card-description">{{ face === 'login' ? '登录账号，接着奔赴你的热爱。' : '创建账号，和球搭子一起出发。' }}</text>
+                <text class="card-title">下一场，等你上场</text>
+                <text class="card-description">登录账号，接着奔赴你的热爱。</text>
               </view>
 
               <view class="auth-fields">
@@ -73,12 +72,13 @@
                   <text class="field-label">手机号</text>
                   <view class="field-control">
                     <wd-input
+                      key="login-phone-input"
                       v-model="form.phone"
                       type="number"
                       inputmode="tel"
                       :maxlength="11"
                       placeholder="请输入 11 位手机号"
-                      :disabled="mode !== face || submitting"
+                      :disabled="submitting"
                       prefix-icon="mobile"
                       clearable
                       no-border
@@ -86,14 +86,104 @@
                     />
                   </view>
                 </view>
-                <view v-if="face === 'register'" class="auth-field">
+                <view class="auth-field">
+                  <view class="field-label-row"><text class="field-label">密码</text><text class="field-hint">至少 6 位</text></view>
+                  <view class="field-control">
+                    <wd-input
+                      key="login-password-input"
+                      v-model="form.password"
+                      :maxlength="32"
+                      placeholder="请输入你的密码"
+                      :disabled="submitting"
+                      prefix-icon="lock-on"
+                      show-password
+                      clearable
+                      no-border
+                      confirm-type="go"
+                      custom-style="background: transparent; padding: var(--auth-input-padding, 13px 14px);"
+                      @confirm="submit('login')"
+                    />
+                  </view>
+                </view>
+              </view>
+
+              <view class="card-actions">
+                <wd-button
+                  block
+                  size="large"
+                  role="button"
+                  :tabindex="mode !== 'login' || submitting ? -1 : 0"
+                  :loading="submitting && mode === 'login'"
+                  :disabled="mode !== 'login' || submitting"
+                  custom-style="height: 48px; border-radius: 14px; box-shadow: 0 8px 18px rgba(47, 107, 230, 0.18);"
+                  @click="submit('login')"
+                  @keydown.enter.prevent="submit('login')"
+                  @keydown.space.prevent="submit('login')"
+                >
+                  <view class="submit-content"><text>登录，准备上场</text><wd-icon name="arrow-right" size="16px" /></view>
+                </wd-button>
+                <view class="card-switch-hint">
+                  <text>还没有账号？</text>
+                  <button
+                    class="text-button"
+                    role="button"
+                    :tabindex="mode !== 'login' || submitting ? -1 : 0"
+                    :disabled="submitting || mode !== 'login'"
+                    hover-class="none"
+                    @click="switchMode('register')"
+                    @keydown.enter.prevent="switchMode('register')"
+                    @keydown.space.prevent="switchMode('register')"
+                  >
+                    翻到背面，去注册
+                    <wd-icon name="swap" size="14px" />
+                  </button>
+                </view>
+              </view>
+            </view>
+
+            <view
+              class="auth-card auth-card--register"
+              :class="{ 'auth-card--active': mode === 'register' }"
+              :aria-hidden="mode !== 'register'"
+              :inert="mode !== 'register' ? true : undefined"
+            >
+              <view class="card-heading">
+                <view class="card-eyebrow">
+                  <view class="card-label"><view class="status-dot" /><text>新球搭子，即刻就位</text></view>
+                  <text class="card-number">02 / RALLY</text>
+                </view>
+                <text class="card-title">从这里，组个好局</text>
+                <text class="card-description">创建账号，和球搭子一起出发。</text>
+              </view>
+
+              <view class="auth-fields">
+                <view class="auth-field">
+                  <text class="field-label">手机号</text>
+                  <view class="field-control">
+                    <wd-input
+                      key="register-phone-input"
+                      v-model="form.phone"
+                      type="number"
+                      inputmode="tel"
+                      :maxlength="11"
+                      placeholder="请输入 11 位手机号"
+                      :disabled="submitting"
+                      prefix-icon="mobile"
+                      clearable
+                      no-border
+                      custom-style="background: transparent; padding: var(--auth-input-padding, 13px 14px);"
+                    />
+                  </view>
+                </view>
+                <view class="auth-field">
                   <text class="field-label">昵称</text>
                   <view class="field-control">
                     <wd-input
+                      key="register-nickname-input"
                       v-model="form.nickname"
                       :maxlength="12"
                       placeholder="群里大家怎么称呼你"
-                      :disabled="mode !== face || submitting"
+                      :disabled="submitting"
                       prefix-icon="user"
                       clearable
                       no-border
@@ -105,17 +195,18 @@
                   <view class="field-label-row"><text class="field-label">密码</text><text class="field-hint">至少 6 位</text></view>
                   <view class="field-control">
                     <wd-input
+                      key="register-password-input"
                       v-model="form.password"
                       :maxlength="32"
-                      :placeholder="face === 'login' ? '请输入你的密码' : '设置你的登录密码'"
-                      :disabled="mode !== face || submitting"
+                      placeholder="设置你的登录密码"
+                      :disabled="submitting"
                       prefix-icon="lock-on"
                       show-password
                       clearable
                       no-border
                       confirm-type="go"
                       custom-style="background: transparent; padding: var(--auth-input-padding, 13px 14px);"
-                      @confirm="submit"
+                      @confirm="submit('register')"
                     />
                   </view>
                 </view>
@@ -126,29 +217,29 @@
                   block
                   size="large"
                   role="button"
-                  :tabindex="mode !== face || submitting ? -1 : 0"
-                  :loading="submitting && mode === face"
-                  :disabled="mode !== face || submitting"
+                  :tabindex="mode !== 'register' || submitting ? -1 : 0"
+                  :loading="submitting && mode === 'register'"
+                  :disabled="mode !== 'register' || submitting"
                   custom-style="height: 48px; border-radius: 14px; box-shadow: 0 8px 18px rgba(47, 107, 230, 0.18);"
-                  @click="submit"
-                  @keydown.enter.prevent="submit"
-                  @keydown.space.prevent="submit"
+                  @click="submit('register')"
+                  @keydown.enter.prevent="submit('register')"
+                  @keydown.space.prevent="submit('register')"
                 >
-                  <view class="submit-content"><text>{{ face === 'login' ? '登录，准备上场' : '注册并登录' }}</text><wd-icon name="arrow-right" size="16px" /></view>
+                  <view class="submit-content"><text>注册并登录</text><wd-icon name="arrow-right" size="16px" /></view>
                 </wd-button>
                 <view class="card-switch-hint">
-                  <text>{{ face === 'login' ? '还没有账号？' : '已经有账号了？' }}</text>
+                  <text>已经有账号了？</text>
                   <button
                     class="text-button"
                     role="button"
-                    :tabindex="mode !== face || submitting ? -1 : 0"
-                    :disabled="submitting || mode !== face"
+                    :tabindex="mode !== 'register' || submitting ? -1 : 0"
+                    :disabled="submitting || mode !== 'register'"
                     hover-class="none"
-                    @click="switchMode(face === 'login' ? 'register' : 'login')"
-                    @keydown.enter.prevent="switchMode(face === 'login' ? 'register' : 'login')"
-                    @keydown.space.prevent="switchMode(face === 'login' ? 'register' : 'login')"
+                    @click="switchMode('login')"
+                    @keydown.enter.prevent="switchMode('login')"
+                    @keydown.space.prevent="switchMode('login')"
                   >
-                    {{ face === 'login' ? '翻到背面，去注册' : '翻回正面，去登录' }}
+                    翻回正面，去登录
                     <wd-icon name="swap" size="14px" />
                   </button>
                 </view>
@@ -207,8 +298,8 @@ function validate() {
   return ''
 }
 
-async function submit() {
-  if (submitting.value) return
+async function submit(sourceMode: Mode) {
+  if (sourceMode !== mode.value || submitting.value) return
   const error = validate()
   if (error) {
     toast.warning(error)
