@@ -38,10 +38,10 @@
             :key="item"
             class="mode-button"
             role="button"
-            :tabindex="submitting ? -1 : 0"
+            :tabindex="submitting || isFlipping ? -1 : 0"
             :class="{ 'mode-button--active': mode === item }"
             :aria-pressed="mode === item"
-            :disabled="submitting"
+            :disabled="submitting || isFlipping"
             hover-class="none"
             @click="switchMode(item)"
             @keydown.enter.prevent="switchMode(item)"
@@ -50,13 +50,19 @@
         </view>
 
         <view class="card-scene">
-          <view class="card-rotator" :class="{ 'card-rotator--flipped': mode === 'register' }">
+          <view
+            id="auth-card-rotator"
+            class="card-rotator"
+            :class="{ 'card-rotator--flipped': mode === 'register', 'card-rotator--flipping': isFlipping }"
+            :style="{ '--auth-flip-duration': `${FLIP_DURATION}ms` }"
+            @transitionend="handleFlipEnd"
+          >
             <!-- 两面使用独立且常驻的输入节点，切换时只旋转卡片。 -->
             <view
               class="auth-card auth-card--login"
               :class="{ 'auth-card--active': mode === 'login' }"
               :aria-hidden="mode !== 'login'"
-              :inert="mode !== 'login' ? true : undefined"
+              :inert="mode !== 'login' || isFlipping ? true : undefined"
             >
               <view class="card-heading">
                 <view class="card-eyebrow">
@@ -79,11 +85,14 @@
                       :maxlength="11"
                       placeholder="请输入 11 位手机号"
                       :disabled="submitting"
+                      custom-input-class="auth-native-input"
+                      :placeholder-style="isFlipping ? 'color: transparent;' : ''"
                       prefix-icon="mobile"
                       clearable
                       no-border
                       custom-style="background: transparent; padding: var(--auth-input-padding, 13px 14px);"
                     />
+                    <text v-if="isFlipping" class="field-proxy" :class="{ 'field-proxy--filled': form.phone }" aria-hidden="true">{{ form.phone || '请输入 11 位手机号' }}</text>
                   </view>
                 </view>
                 <view class="auth-field">
@@ -95,6 +104,8 @@
                       :maxlength="32"
                       placeholder="请输入你的密码"
                       :disabled="submitting"
+                      custom-input-class="auth-native-input"
+                      :placeholder-style="isFlipping ? 'color: transparent;' : ''"
                       prefix-icon="lock-on"
                       show-password
                       clearable
@@ -103,6 +114,7 @@
                       custom-style="background: transparent; padding: var(--auth-input-padding, 13px 14px);"
                       @confirm="submit('login')"
                     />
+                    <text v-if="isFlipping" class="field-proxy" :class="{ 'field-proxy--filled': form.password }" aria-hidden="true">{{ maskedPassword || '请输入你的密码' }}</text>
                   </view>
                 </view>
               </view>
@@ -112,9 +124,9 @@
                   block
                   size="large"
                   role="button"
-                  :tabindex="mode !== 'login' || submitting ? -1 : 0"
+                  :tabindex="mode !== 'login' || submitting || isFlipping ? -1 : 0"
                   :loading="submitting && mode === 'login'"
-                  :disabled="mode !== 'login' || submitting"
+                  :disabled="mode !== 'login' || submitting || isFlipping"
                   custom-style="height: 48px; border-radius: 14px; box-shadow: 0 8px 18px rgba(47, 107, 230, 0.18);"
                   @click="submit('login')"
                   @keydown.enter.prevent="submit('login')"
@@ -127,8 +139,8 @@
                   <button
                     class="text-button"
                     role="button"
-                    :tabindex="mode !== 'login' || submitting ? -1 : 0"
-                    :disabled="submitting || mode !== 'login'"
+                    :tabindex="mode !== 'login' || submitting || isFlipping ? -1 : 0"
+                    :disabled="submitting || isFlipping || mode !== 'login'"
                     hover-class="none"
                     @click="switchMode('register')"
                     @keydown.enter.prevent="switchMode('register')"
@@ -145,7 +157,7 @@
               class="auth-card auth-card--register"
               :class="{ 'auth-card--active': mode === 'register' }"
               :aria-hidden="mode !== 'register'"
-              :inert="mode !== 'register' ? true : undefined"
+              :inert="mode !== 'register' || isFlipping ? true : undefined"
             >
               <view class="card-heading">
                 <view class="card-eyebrow">
@@ -168,11 +180,14 @@
                       :maxlength="11"
                       placeholder="请输入 11 位手机号"
                       :disabled="submitting"
+                      custom-input-class="auth-native-input"
+                      :placeholder-style="isFlipping ? 'color: transparent;' : ''"
                       prefix-icon="mobile"
                       clearable
                       no-border
                       custom-style="background: transparent; padding: var(--auth-input-padding, 13px 14px);"
                     />
+                    <text v-if="isFlipping" class="field-proxy" :class="{ 'field-proxy--filled': form.phone }" aria-hidden="true">{{ form.phone || '请输入 11 位手机号' }}</text>
                   </view>
                 </view>
                 <view class="auth-field">
@@ -184,11 +199,14 @@
                       :maxlength="12"
                       placeholder="群里大家怎么称呼你"
                       :disabled="submitting"
+                      custom-input-class="auth-native-input"
+                      :placeholder-style="isFlipping ? 'color: transparent;' : ''"
                       prefix-icon="user"
                       clearable
                       no-border
                       custom-style="background: transparent; padding: var(--auth-input-padding, 13px 14px);"
                     />
+                    <text v-if="isFlipping" class="field-proxy" :class="{ 'field-proxy--filled': form.nickname }" aria-hidden="true">{{ form.nickname || '群里大家怎么称呼你' }}</text>
                   </view>
                 </view>
                 <view class="auth-field">
@@ -200,6 +218,8 @@
                       :maxlength="32"
                       placeholder="设置你的登录密码"
                       :disabled="submitting"
+                      custom-input-class="auth-native-input"
+                      :placeholder-style="isFlipping ? 'color: transparent;' : ''"
                       prefix-icon="lock-on"
                       show-password
                       clearable
@@ -208,6 +228,7 @@
                       custom-style="background: transparent; padding: var(--auth-input-padding, 13px 14px);"
                       @confirm="submit('register')"
                     />
+                    <text v-if="isFlipping" class="field-proxy" :class="{ 'field-proxy--filled': form.password }" aria-hidden="true">{{ maskedPassword || '设置你的登录密码' }}</text>
                   </view>
                 </view>
               </view>
@@ -217,9 +238,9 @@
                   block
                   size="large"
                   role="button"
-                  :tabindex="mode !== 'register' || submitting ? -1 : 0"
+                  :tabindex="mode !== 'register' || submitting || isFlipping ? -1 : 0"
                   :loading="submitting && mode === 'register'"
-                  :disabled="mode !== 'register' || submitting"
+                  :disabled="mode !== 'register' || submitting || isFlipping"
                   custom-style="height: 48px; border-radius: 14px; box-shadow: 0 8px 18px rgba(47, 107, 230, 0.18);"
                   @click="submit('register')"
                   @keydown.enter.prevent="submit('register')"
@@ -232,8 +253,8 @@
                   <button
                     class="text-button"
                     role="button"
-                    :tabindex="mode !== 'register' || submitting ? -1 : 0"
-                    :disabled="submitting || mode !== 'register'"
+                    :tabindex="mode !== 'register' || submitting || isFlipping ? -1 : 0"
+                    :disabled="submitting || isFlipping || mode !== 'register'"
                     hover-class="none"
                     @click="switchMode('login')"
                     @keydown.enter.prevent="switchMode('login')"
@@ -259,7 +280,7 @@
 
 <script setup lang="ts">
 import { onLoad } from '@dcloudio/uni-app'
-import { onUnmounted, reactive, ref } from 'vue'
+import { computed, getCurrentInstance, nextTick, onUnmounted, reactive, ref } from 'vue'
 import { useToast } from 'wot-design-uni'
 import { login, register } from '@/api/auth'
 import { useUserStore } from '@/stores/user'
@@ -271,8 +292,14 @@ const toast = useToast()
 const userStore = useUserStore()
 const mode = ref<Mode>('login')
 const submitting = ref(false)
+const isFlipping = ref(false)
 const form = reactive({ phone: '', password: '', nickname: '' })
+const maskedPassword = computed(() => '•'.repeat(form.password.length))
+const pageInstance = getCurrentInstance()
 let redirectTimer: ReturnType<typeof setTimeout> | undefined
+let flipTimer: ReturnType<typeof setTimeout> | undefined
+let disposed = false
+const FLIP_DURATION = 720
 
 /** 登录成功后要回到的页面，没有就去首页 */
 let redirect = '/pages/index/index'
@@ -280,14 +307,46 @@ onLoad((query) => {
   if (query?.redirect) redirect = decodeURIComponent(query.redirect)
 })
 onUnmounted(() => {
+  disposed = true
   clearTimeout(redirectTimer)
+  clearTimeout(flipTimer)
 })
 
-function switchMode(nextMode: Mode) {
-  if (submitting.value || mode.value === nextMode) return
+async function switchMode(nextMode: Mode) {
+  if (submitting.value || isFlipping.value || mode.value === nextMode) return
+  isFlipping.value = true
   uni.hideKeyboard()
+  // 小程序逻辑层和视图层异步更新，先让静态文字接替原生 input，再开始旋转。
+  await waitForView()
+  if (disposed) return
   mode.value = nextMode
   uni.setNavigationBarTitle({ title: nextMode === 'login' ? '登录' : '注册' })
+  await waitForView()
+  if (disposed) return
+  // 优先使用视图层的 transitionend；减少动态效果或事件缺失时由计时器兜底。
+  flipTimer = setTimeout(finishFlip, FLIP_DURATION + 120)
+}
+
+async function waitForView() {
+  await nextTick()
+  await pageInstance?.proxy?.$nextTick?.()
+}
+
+function handleFlipEnd(event: TransitionEvent) {
+  // 必须检查事件来源，避免子节点的 visibility 过渡提前结束输入隐藏。
+  const target = event.target as { id?: string } | null
+  const detail = (event as TransitionEvent & { detail?: { propertyName?: string } }).detail
+  const property = event.propertyName || detail?.propertyName
+  if (!isFlipping.value || target?.id !== 'auth-card-rotator') return
+  if (property && property !== 'transform' && property !== '-webkit-transform') return
+  clearTimeout(flipTimer)
+  // 留出最后一帧的合成时间，再把原生文字交还给输入框。
+  flipTimer = setTimeout(finishFlip, 40)
+}
+
+function finishFlip() {
+  clearTimeout(flipTimer)
+  isFlipping.value = false
 }
 
 /** 返回错误提示；没问题返回空字符串 */
@@ -299,7 +358,7 @@ function validate() {
 }
 
 async function submit(sourceMode: Mode) {
-  if (sourceMode !== mode.value || submitting.value) return
+  if (sourceMode !== mode.value || isFlipping.value || submitting.value) return
   const error = validate()
   if (error) {
     toast.warning(error)
@@ -370,7 +429,7 @@ async function submit(sourceMode: Mode) {
 .mode-button::after, .text-button::after { border: 0; }
 .mode-button--active { color: #245fd9; font-weight: 650; }
 .card-scene { perspective: 1400px; }
-.card-rotator { position: relative; transform-style: preserve-3d; transition: transform 720ms cubic-bezier(.22, .8, .25, 1); }
+.card-rotator { position: relative; transform-style: preserve-3d; transition: transform var(--auth-flip-duration, 720ms) cubic-bezier(.22, .8, .25, 1); }
 .card-rotator--flipped { transform: rotateY(180deg); }
 .auth-card { position: absolute; top: 0; right: 0; left: 0; display: flex; flex-direction: column; min-width: 0; box-sizing: border-box; padding: 28px; border: 1px solid #e8e9ed; border-radius: 24px; background: linear-gradient(150deg, #f5f8ff 0, white 30%); box-shadow: 0 20px 50px -20px #20478133, 0 2px 8px #20478105; -webkit-backface-visibility: hidden; backface-visibility: hidden; visibility: hidden; pointer-events: none; transition: visibility 0s 360ms; }
 .auth-card--register { transform: rotateY(180deg); }
@@ -386,8 +445,12 @@ async function submit(sourceMode: Mode) {
 .field-label { font-size: 13px; font-weight: 500; color: #4a4a4a; }
 .field-label-row { display: flex; align-items: baseline; justify-content: space-between; }
 .field-hint { font-size: 11px; color: #69768c; }
-.field-control { border: 1px solid #e8e9ed; border-radius: 12px; background: #f8f9fb; transition: border-color 180ms, box-shadow 180ms, background 180ms; --wot-input-icon-color: #8190a7; --wot-input-placeholder-color: #818898; --wot-input-fs: 14px; }
+.field-control { position: relative; border: 1px solid #e8e9ed; border-radius: 12px; background: #f8f9fb; transition: border-color 180ms, box-shadow 180ms, background 180ms; --wot-input-icon-color: #8190a7; --wot-input-placeholder-color: #818898; --wot-input-fs: 14px; }
 .field-control:focus-within { border-color: #7ba2f1; background: white; box-shadow: 0 0 0 3px #e9f0fd; }
+.field-proxy { position: absolute; top: 50%; right: calc(var(--auth-input-inline-padding, 14px) + 24px); left: calc(var(--auth-input-inline-padding, 14px) + 24px); z-index: 2; overflow: hidden; color: var(--wot-input-placeholder-color); font-size: var(--wot-input-fs); line-height: 24px; white-space: nowrap; pointer-events: none; transform: translateY(-50%); }
+.field-proxy--filled { color: var(--wot-input-color, #262626); }
+.card-rotator--flipping .field-control { pointer-events: none; }
+.card-rotator--flipping :deep(.auth-native-input) { visibility: hidden !important; opacity: 0 !important; color: transparent !important; -webkit-text-fill-color: transparent !important; caret-color: transparent !important; }
 .card-actions { display: flex; flex-direction: column; gap: 18px; margin-top: auto; padding-top: 30px; }
 .submit-content { display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 14px; font-weight: 600; }
 .card-switch-hint { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 3px; color: #5c5c5c; font-size: 11px; }
@@ -416,7 +479,7 @@ async function submit(sourceMode: Mode) {
   .auth-panel { width: 100%; }
   .mode-switch { width: 184px; margin-bottom: 18px; }
   .mode-button { line-height: 34px; font-size: 13px; }
-  .auth-card { padding: 22px; border-radius: 22px; --auth-input-padding: 10px 12px; }
+  .auth-card { padding: 22px; border-radius: 22px; --auth-input-padding: 10px 12px; --auth-input-inline-padding: 12px; }
   .card-eyebrow { margin-bottom: 16px; }
   .card-title { font-size: 23px; }
   .auth-fields { margin-top: 20px; gap: 14px; }
