@@ -1,8 +1,8 @@
 <template>
   <view class="min-h-screen bg-canvas">
-    <view v-if="notFound" class="flex flex-col items-center gap-3 py-24">
+    <view v-if="errorText" class="flex flex-col items-center gap-3 px-8 py-24">
       <wd-icon name="money-circle" size="48px" color="#B8BCC6" />
-      <text class="text-sm text-muted">{{ notReady ? '费用结算功能后端还在开发中，过几天再来' : '找不到这场的账单' }}</text>
+      <text class="text-center text-sm text-muted">{{ errorText }}</text>
     </view>
 
     <view v-else-if="!bill" class="flex justify-center py-24">
@@ -114,7 +114,7 @@
 import { onLoad } from '@dcloudio/uni-app'
 import { computed, reactive, ref } from 'vue'
 import { useMessage, useToast } from 'wot-design-uni'
-import { BILL_NOT_READY, addBillItem, fetchBillByGame, removeBillItem, setPaid } from '@/api/bill'
+import { addBillItem, fetchBillByGame, removeBillItem, setPaid } from '@/api/bill'
 import { useUserStore } from '@/stores/user'
 import type { Bill } from '@/types'
 import { formatDateTime, formatMoney, weekdayText } from '@/utils/format'
@@ -132,7 +132,8 @@ const submitting = ref(false)
 const newItem = reactive({ name: '', yuan: '' })
 
 const myId = computed(() => userStore.userId)
-const isOrganizer = computed(() => !!bill.value?.members.some((m) => m.isOrganizer && m.member.id === myId.value))
+/** 组织者自己没报名时不在 members 里，所以用 bill.organizer 判断 */
+const isOrganizer = computed(() => bill.value?.organizer.id === myId.value)
 const total = computed(() => bill.value?.items.reduce((sum, i) => sum + i.amount, 0) ?? 0)
 const dateText = computed(() => (bill.value ? `${dayjs(bill.value.gameStartAt).format('M月D日')} ${weekdayText(bill.value.gameStartAt)}` : ''))
 const perPersonText = computed(() => {
@@ -149,16 +150,17 @@ const paidAmount = computed(() => bill.value?.members.filter((m) => m.paid).redu
 const paidPercent = computed(() => (total.value > 0 ? Math.round((paidAmount.value / total.value) * 100) : 0))
 const visibleMembers = computed(() => (onlyUnpaid.value ? unpaid.value : bill.value?.members ?? []))
 
-const notFound = ref(false)
-/** 真实场次的账单接口后端还没做 */
-const notReady = ref(false)
+/**
+ * 打不开账单时显示后端给的原因，例如：
+ * 「结束后才能结算费用」「组织者还没开始结算这一场」
+ */
+const errorText = ref('')
 
 onLoad(async (query) => {
   try {
     bill.value = await fetchBillByGame(Number(query?.gameId))
   } catch (e) {
-    notFound.value = true
-    notReady.value = e instanceof ApiError && e.code === BILL_NOT_READY
+    errorText.value = e instanceof ApiError ? e.message : '账单加载失败，请稍后再试'
   }
 })
 

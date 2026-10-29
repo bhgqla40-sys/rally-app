@@ -36,7 +36,7 @@ export function removeSignup(gameId: number, memberId: number): Promise<GameDeta
   return http.delete<GameDetail>(`/games/${gameId}/signups/${memberId}`)
 }
 
-/** 组织者取消这一场（开始前才能取消），reason 最多 100 个字 */
+/** 组织者取消这一场（开始前才能取消），reason 必填，最多 100 个字 */
 export function cancelGame(gameId: number, reason: string): Promise<GameDetail> {
   return http.post<GameDetail>(`/games/${gameId}/cancel`, { reason })
 }

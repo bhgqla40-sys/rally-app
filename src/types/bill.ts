@@ -28,6 +28,11 @@ export interface Bill {
   gameTitle: string
   gameStartAt: string
   groupName: string
+  /**
+   * 这一场的组织者。判断「我是不是组织者」用它：
+   * 组织者自己没报名时不在 members 里，靠 members[].isOrganizer 判断不出来。
+   */
+  organizer: Member
   items: BillItem[]
   members: BillMember[]
 }

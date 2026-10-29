@@ -111,8 +111,7 @@ const summary = computed(() => [
   { label: '鸽子', value: records.value.filter((r) => r.status === 'NO_SHOW').length },
 ])
 
-/** 只有还在 mock 场次里的记录才有详情页（更早的历史只展示） */
 function open(r: SignupRecord) {
-  if (r.gameId >= 99) uni.navigateTo({ url: `/pages/game/detail?id=${r.gameId}` })
+  uni.navigateTo({ url: `/pages/game/detail?id=${r.gameId}` })
 }
 </script>

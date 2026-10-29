@@ -72,7 +72,6 @@ import { computed, ref } from 'vue'
 import { useMessage, useToast } from 'wot-design-uni'
 import { fetchMyGroups } from '@/api/group'
 import { fetchMyProfile } from '@/api/user'
-import { syncMockUser } from '@/mock/db'
 import { useUserStore } from '@/stores/user'
 import type { Group, MyProfile } from '@/types'
 import { resolveTabBookDirection, type TabBookDirection } from '@/utils/tab-transition'
@@ -90,8 +89,6 @@ onShow(async () => {
   tabDirection.value = direction
   if (direction !== 'none') tabPlayKey.value += 1
   ;[profile.value, groups.value] = await Promise.all([fetchMyProfile(), fetchMyGroups()])
-  // 联调过渡：还在用 mock 的页面里，「我」的昵称和头像跟着真实资料走
-  syncMockUser(profile.value.id, profile.value.nickname, profile.value.avatar)
 })
 
 const stats = computed(() => [

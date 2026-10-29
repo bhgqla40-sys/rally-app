@@ -64,7 +64,6 @@ import { onLoad } from '@dcloudio/uni-app'
 import { computed, reactive, ref } from 'vue'
 import { useToast } from 'wot-design-uni'
 import { fetchMyProfile, updateMyProfile, uploadAvatar } from '@/api/user'
-import { syncMockUser } from '@/mock/db'
 import { useUserStore } from '@/stores/user'
 import type { MyProfile } from '@/types'
 import { shrinkImage } from '@/utils/image'
@@ -95,11 +94,10 @@ const changed = computed(() => {
   return form.nickname.trim() !== p.nickname || form.bio.trim() !== (p.bio ?? '')
 })
 
-/** 后端返回最新资料后，同步到页面、登录状态和 mock 数据（还没接后端的页面里显示的「我」） */
+/** 后端返回最新资料后，同步到页面和登录状态 */
 function applyProfile(p: MyProfile) {
   profile.value = p
   userStore.setNickname(p.nickname)
-  syncMockUser(p.id, p.nickname, p.avatar)
 }
 
 async function save() {
