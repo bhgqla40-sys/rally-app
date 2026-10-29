@@ -1,78 +1,13 @@
 /**
- * 固定局相关接口。
- * - fetchGroupTemplates / setTemplateActive  ✅ 已接入后端（rally-server：GameTemplateController）
- * - createGameTemplate  还是 mock，后端做完场次模块后换成注释里的 http 调用
+ * 固定局相关接口  ✅ 已全部接入后端（rally-server：GameTemplateController）
+ * 后端每 10 分钟检查一次，上一场开始后自动生成下一周的场次。
  */
-import dayjs from 'dayjs'
-import { SPORT_TEXT } from '@/constants'
-import { ME, db } from '@/mock/db'
-import type { GameDetail, GameTemplateBrief, GameTemplateForm } from '@/types'
-import { ApiError, http } from '@/utils/request'
-import { weekdayText } from '@/utils/format'
-import { mockRequest } from './mock'
+import type { GameTemplateBrief, GameTemplateForm } from '@/types'
+import { http } from '@/utils/request'
 
-/**
- * 第一场的开局时间：取最近一个「还来得及报名」的日子。
- * 比如今天就是周六，但已经过了截止时间，那第一场就排到下周六。
- */
-function firstStart(weekday: number, startTime: string, deadlineHoursBefore: number) {
-  const [h, m] = startTime.split(':').map(Number)
-  const now = dayjs()
-  const todayWeekday = now.day() === 0 ? 7 : now.day()
-  let start = now.startOf('day').add(weekday - todayWeekday, 'day').hour(h).minute(m)
-  while (!start.subtract(deadlineHoursBefore, 'hour').isAfter(now)) start = start.add(7, 'day')
-  return start
-}
-
-/** 创建固定局，并生成第一场，返回第一场的 id */
+/** 创建固定局（群主、管理员），同时生成第一场，返回第一场的 id */
 export function createGameTemplate(form: GameTemplateForm): Promise<{ firstGameId: number }> {
-  // return http.post<{ firstGameId: number }>('/game-templates', form)
-  return mockRequest(() => {
-    const group = db.groups.find((g) => g.id === form.groupId)
-    if (!group) throw new ApiError(501, '固定局接口后端还在开发中')
-    const [oh, om] = form.openTime.split(':').map(Number)
-    const start = firstStart(form.weekday, form.startTime, form.deadlineHoursBefore)
-    const game: GameDetail = {
-      id: Math.max(...db.games.map((g) => g.id)) + 1,
-      title: form.name || `${weekdayText(start)}${SPORT_TEXT[form.sport]}`,
-      groupId: group.id,
-      groupName: group.name,
-      sport: form.sport,
-      venue: form.venue,
-      startAt: start.format(),
-      endAt: start.add(form.durationMinutes, 'minute').format(),
-      openAt: start.subtract(form.openDaysBefore, 'day').hour(oh).minute(om).format(),
-      deadlineAt: start.subtract(form.deadlineHoursBefore, 'hour').format(),
-      capacity: form.capacity,
-      joinedCount: 0,
-      waitlistCount: 0,
-      status: 'OPEN',
-      mySignup: 'NONE',
-      organizer: ME,
-      feeMode: form.feeMode,
-      feePerPerson: form.feeMode === 'FIXED' ? form.fixedFee : undefined,
-      allowWaitlist: form.allowWaitlist,
-      autoPromote: form.autoPromote,
-      joined: [],
-      waitlist: [],
-      rules: [`开局前 ${form.deadlineHoursBefore} 小时停止报名和取消`, '截止后临时请假，会记一次「鸽子」'],
-    }
-    db.games.push(game)
-    db.templates.push({
-      id: Math.max(0, ...db.templates.map((t) => t.id)) + 1,
-      groupId: group.id,
-      name: game.title,
-      sport: form.sport,
-      venue: form.venue,
-      weekday: form.weekday,
-      startTime: form.startTime,
-      durationMinutes: form.durationMinutes,
-      capacity: form.capacity,
-      active: true,
-    })
-    group.scheduleText = `每${weekdayText(start)}`
-    return { firstGameId: game.id }
-  })
+  return http.post<{ firstGameId: number }>('/game-templates', form)
 }
 
 /** 某个群的固定局列表 */

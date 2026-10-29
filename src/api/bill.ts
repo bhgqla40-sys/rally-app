@@ -1,6 +1,7 @@
 /**
  * 费用结算接口。
  * 现在用 mock 数据；后端完成后换成注释里的 http 调用即可。
+ * 场次已经接入后端，真实场次在 mock 里找不到，会提示「后端还在开发中」（mock 场次的 id 从 9000 开始，不会和真实场次撞上）。
  *
  * 金额全部用「分」计算。AA 分摊除不尽时，余下的几分钱由前几个人各多出 1 分，
  * 保证每个人的应付金额加起来正好等于总费用。
@@ -27,6 +28,8 @@ function recalc(bill: Bill) {
   })
 }
 
+export const BILL_NOT_READY = 501
+
 function findBill(id: number) {
   const bill = db.bills.find((b) => b.id === id)
   if (!bill) throw new ApiError(404, '账单不存在')
@@ -40,7 +43,7 @@ export function fetchBillByGame(gameId: number): Promise<Bill> {
     let bill = db.bills.find((b) => b.gameId === gameId)
     if (!bill) {
       const game = db.games.find((g) => g.id === gameId)
-      if (!game) throw new ApiError(404, '场次不存在')
+      if (!game) throw new ApiError(BILL_NOT_READY, '费用结算接口后端还在开发中')
       bill = {
         id: Math.max(0, ...db.bills.map((b) => b.id)) + 1,
         gameId,

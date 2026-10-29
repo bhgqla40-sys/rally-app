@@ -2,7 +2,7 @@
   <view class="min-h-screen bg-canvas">
     <view v-if="notFound" class="flex flex-col items-center gap-3 py-24">
       <wd-icon name="money-circle" size="48px" color="#B8BCC6" />
-      <text class="text-sm text-muted">找不到这场的账单</text>
+      <text class="text-sm text-muted">{{ notReady ? '费用结算功能后端还在开发中，过几天再来' : '找不到这场的账单' }}</text>
     </view>
 
     <view v-else-if="!bill" class="flex justify-center py-24">
@@ -114,10 +114,11 @@
 import { onLoad } from '@dcloudio/uni-app'
 import { computed, reactive, ref } from 'vue'
 import { useMessage, useToast } from 'wot-design-uni'
-import { addBillItem, fetchBillByGame, removeBillItem, setPaid } from '@/api/bill'
+import { BILL_NOT_READY, addBillItem, fetchBillByGame, removeBillItem, setPaid } from '@/api/bill'
 import { useUserStore } from '@/stores/user'
 import type { Bill } from '@/types'
 import { formatDateTime, formatMoney, weekdayText } from '@/utils/format'
+import { ApiError } from '@/utils/request'
 import dayjs from 'dayjs'
 
 const toast = useToast()
@@ -149,12 +150,15 @@ const paidPercent = computed(() => (total.value > 0 ? Math.round((paidAmount.val
 const visibleMembers = computed(() => (onlyUnpaid.value ? unpaid.value : bill.value?.members ?? []))
 
 const notFound = ref(false)
+/** 真实场次的账单接口后端还没做 */
+const notReady = ref(false)
 
 onLoad(async (query) => {
   try {
     bill.value = await fetchBillByGame(Number(query?.gameId))
-  } catch {
+  } catch (e) {
     notFound.value = true
+    notReady.value = e instanceof ApiError && e.code === BILL_NOT_READY
   }
 })
 

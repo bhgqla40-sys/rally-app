@@ -115,22 +115,22 @@ const otherGroups: Group[] = [
 
 const games: GameDetail[] = [
   // 已结束：我是普通成员，账单还没付（用来演示「待付款」）
-  makeGame({ id: 99, groupId: 9001, sport: 'BADMINTON', dayOffset: -6, start: '19:00', durationMinutes: 120, venue: '市体育中心 3 号馆', capacity: 12, organizer: person('阿杰'), joined: [...people(0, 9), ME], feePerPerson: 3900 }),
+  makeGame({ id: 9099, groupId: 9001, sport: 'BADMINTON', dayOffset: -6, start: '19:00', durationMinutes: 120, venue: '市体育中心 3 号馆', capacity: 12, organizer: person('阿杰'), joined: [...people(0, 9), ME], feePerPerson: 3900 }),
   // 已结束：我是组织者（用来演示费用结算）
-  makeGame({ id: 100, groupId: 9002, sport: 'FOOTBALL', dayOffset: -2, start: '20:00', durationMinutes: 120, venue: '星光五人制球场 B 场', capacity: 14, organizer: ME, joined: [ME, ...people(0, 11)], feePerPerson: 3500 }),
+  makeGame({ id: 9100, groupId: 9002, sport: 'FOOTBALL', dayOffset: -2, start: '20:00', durationMinutes: 120, venue: '星光五人制球场 B 场', capacity: 14, organizer: ME, joined: [ME, ...people(0, 11)], feePerPerson: 3500 }),
   // 已报名
-  makeGame({ id: 101, groupId: 9001, sport: 'BADMINTON', dayOffset: 1, start: '19:00', durationMinutes: 120, venue: '市体育中心 3 号馆', capacity: 12, organizer: person('阿杰'), joined: [...people(0, 8), ME], feePerPerson: 3500 }),
+  makeGame({ id: 9101, groupId: 9001, sport: 'BADMINTON', dayOffset: 1, start: '19:00', durationMinutes: 120, venue: '市体育中心 3 号馆', capacity: 12, organizer: person('阿杰'), joined: [...people(0, 8), ME], feePerPerson: 3500 }),
   // 可报名
-  makeGame({ id: 102, groupId: 9002, sport: 'FOOTBALL', dayOffset: 2, start: '20:00', durationMinutes: 120, venue: '星光五人制球场 B 场', capacity: 14, organizer: ME, joined: people(8, 6), feePerPerson: 3000 }),
+  makeGame({ id: 9102, groupId: 9002, sport: 'FOOTBALL', dayOffset: 2, start: '20:00', durationMinutes: 120, venue: '星光五人制球场 B 场', capacity: 14, organizer: ME, joined: people(8, 6), feePerPerson: 3000 }),
   // 满员，我在候补
-  makeGame({ id: 103, groupId: 9003, sport: 'BASKETBALL', dayOffset: 3, start: '09:00', durationMinutes: 120, venue: '城东篮球公园 2 号场', capacity: 10, organizer: person('马超'), joined: people(3, 10), waitlist: [ME, person('罗佳')], feePerPerson: 2500, openDaysBefore: 5 }),
+  makeGame({ id: 9103, groupId: 9003, sport: 'BASKETBALL', dayOffset: 3, start: '09:00', durationMinutes: 120, venue: '城东篮球公园 2 号场', capacity: 10, organizer: person('马超'), joined: people(3, 10), waitlist: [ME, person('罗佳')], feePerPerson: 2500, openDaysBefore: 5 }),
   // 还没开放报名
-  makeGame({ id: 104, groupId: 9004, sport: 'FRISBEE', dayOffset: 6, start: '19:30', durationMinutes: 90, venue: '滨江公园草坪', capacity: 16, organizer: person('林夕'), joined: [], feePerPerson: 2000 }),
+  makeGame({ id: 9104, groupId: 9004, sport: 'FRISBEE', dayOffset: 6, start: '19:30', durationMinutes: 90, venue: '滨江公园草坪', capacity: 16, organizer: person('林夕'), joined: [], feePerPerson: 2000 }),
 ]
 
 /** 固定局：从每个群接下来的那一场反推出来 */
 const templates: GameTemplateBrief[] = games
-  .filter((g) => [101, 102, 103, 104].includes(g.id))
+  .filter((g) => [9101, 9102, 9103, 9104].includes(g.id))
   .map((g, i) => {
     const start = dayjs(g.startAt)
     return {
@@ -168,9 +168,9 @@ export function membersOf(groupId: number): GroupMember[] {
 }
 
 const bills: Bill[] = (() => {
-  const game = games.find((g) => g.id === 100)!
+  const game = games.find((g) => g.id === 9100)!
   const perPerson = 3500
-  const badminton = games.find((g) => g.id === 99)!
+  const badminton = games.find((g) => g.id === 9099)!
   return [
     {
       id: 202,
@@ -222,7 +222,7 @@ const historyRecords: SignupRecord[] = [
   const [h, m] = r.start.split(':').map(Number)
   const start = dayjs().startOf('day').add(r.offset, 'day').hour(h).minute(m)
   return {
-    gameId: 90 - i,
+    gameId: 9090 - i,
     title: gameTitle(start, r.sport),
     groupName: r.title,
     venue: r.venue,
