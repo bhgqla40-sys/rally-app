@@ -23,6 +23,12 @@ export const useUserStore = defineStore('user', () => {
     uni.setStorageSync(NICKNAME_KEY, name)
   }
 
+  /** 修改资料后同步昵称 */
+  function setNickname(name: string) {
+    nickname.value = name
+    uni.setStorageSync(NICKNAME_KEY, name)
+  }
+
   function logout() {
     token.value = ''
     nickname.value = ''
@@ -31,5 +37,5 @@ export const useUserStore = defineStore('user', () => {
     uni.removeStorageSync(NICKNAME_KEY)
   }
 
-  return { token, userId, nickname, setLogin, logout }
+  return { token, userId, nickname, setLogin, setNickname, logout }
 })

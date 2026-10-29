@@ -19,9 +19,10 @@ export const ME: Member = {
 }
 
 /** 登录成功后调用：把 mock 里的「我」换成真实用户 */
-export function syncMockUser(id: number, nickname: string) {
+export function syncMockUser(id: number, nickname: string, avatar?: string) {
   ME.id = id
   ME.nickname = nickname
+  ME.avatar = avatar
 }
 
 const NAMES = ['阿杰', '李娜', '王强', '刘洋', '陈晨', '杨帆', '赵磊', '周婷', '孙悦', '马超', '黄磊', '林夕', '何雨', '罗佳', '高远', '许诺', '唐果', '宋雨', '韩冬', '冯雪']

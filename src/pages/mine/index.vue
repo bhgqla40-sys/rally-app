@@ -2,12 +2,15 @@
   <tab-book-transition :direction="tabDirection" :play-key="tabPlayKey">
     <view class="min-h-screen bg-canvas pb-6">
       <!-- 个人信息 -->
-      <view class="flex items-center gap-3.5 bg-white px-4 pt-4 pb-6">
+      <view class="flex items-center gap-3.5 bg-white px-4 pt-4 pb-6" @click="go('/pages/mine/profile')">
         <user-avatar v-if="profile" :member="profile" size="lg" self />
-        <view class="flex flex-1 flex-col gap-1">
-          <text class="text-xl font-semibold text-ink">{{ profile?.nickname ?? ' ' }}</text>
-          <text class="text-[13px] text-muted">已加入 {{ profile?.groupCount ?? 0 }} 个群组</text>
+        <view class="flex min-w-0 flex-1 flex-col gap-1">
+          <text class="truncate text-xl font-semibold text-ink">{{ profile?.nickname ?? ' ' }}</text>
+          <text class="line-clamp-2 text-[13px] leading-5" :class="profile?.bio ? 'text-ink-2' : 'text-muted'">
+            {{ profile?.bio || '写一句个人介绍，让群友更了解你' }}
+          </text>
         </view>
+        <wd-icon name="arrow-right" size="16px" color="#5C5C5C" />
       </view>
 
       <view class="flex flex-col gap-3 px-4 pt-3">
@@ -69,6 +72,7 @@ import { computed, ref } from 'vue'
 import { useMessage, useToast } from 'wot-design-uni'
 import { fetchMyGroups } from '@/api/group'
 import { fetchMyProfile } from '@/api/user'
+import { syncMockUser } from '@/mock/db'
 import { useUserStore } from '@/stores/user'
 import type { Group, MyProfile } from '@/types'
 import { resolveTabBookDirection, type TabBookDirection } from '@/utils/tab-transition'
@@ -86,6 +90,8 @@ onShow(async () => {
   tabDirection.value = direction
   if (direction !== 'none') tabPlayKey.value += 1
   ;[profile.value, groups.value] = await Promise.all([fetchMyProfile(), fetchMyGroups()])
+  // 联调过渡：还在用 mock 的页面里，「我」的昵称和头像跟着真实资料走
+  syncMockUser(profile.value.id, profile.value.nickname, profile.value.avatar)
 })
 
 const stats = computed(() => [

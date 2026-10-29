@@ -5,19 +5,16 @@
     </view>
 
     <view v-else class="flex flex-col gap-3 pt-3 pb-10">
-      <view v-if="notReady" class="mx-4 rounded-xl bg-warning-soft px-4 py-3 text-[13px] leading-5 text-warning-ink">
-        改群名、重新生成邀请码、成员管理这些功能，后端还在开发中，现在只能查看。
-      </view>
       <!-- 基本信息 -->
       <wd-cell-group title="基本信息" insert>
-        <wd-input v-model="name" label="群名称" :maxlength="20" :readonly="notReady" :clearable="!notReady" />
+        <wd-input v-model="name" label="群名称" :maxlength="20" clearable />
         <view v-if="nameChanged" class="px-4 pb-3">
           <wd-button block size="small" :loading="savingName" @click="saveName">保存群名称</wd-button>
         </view>
         <wd-cell title="邀请码" center>
           <view class="flex items-center gap-3">
             <text class="text-base font-bold tracking-[2px] text-ink">{{ group.inviteCode }}</text>
-            <text v-if="!notReady" class="text-sm text-primary" @click="onResetCode">重新生成</text>
+            <text class="text-sm text-primary" @click="onResetCode">重新生成</text>
           </view>
         </wd-cell>
       </wd-cell-group>
@@ -41,14 +38,17 @@
         <view
           v-for="(m, i) in members"
           :key="m.member.id"
-          class="flex h-[56px] items-center gap-3 px-4"
+          class="flex h-[60px] items-center gap-3 px-4"
           :class="i < members.length - 1 ? 'border-b border-line-soft' : ''"
         >
           <user-avatar :member="m.member" size="sm" :self="m.member.id === myId" />
-          <view class="flex min-w-0 flex-1 items-center gap-1.5">
-            <text class="truncate text-[15px] text-ink">{{ m.member.id === myId ? `${m.member.nickname}（我）` : m.member.nickname }}</text>
-            <text v-if="m.role === 'OWNER'" class="shrink-0 rounded bg-primary-soft px-1.5 text-[11px] leading-[18px] font-medium text-primary-ink">群主</text>
-            <text v-else-if="m.role === 'ADMIN'" class="shrink-0 rounded bg-success-soft px-1.5 text-[11px] leading-[18px] font-medium text-success-ink">管理员</text>
+          <view class="flex min-w-0 flex-1 flex-col gap-0.5">
+            <view class="flex min-w-0 items-center gap-1.5">
+              <text class="truncate text-[15px] text-ink">{{ m.member.id === myId ? `${m.member.nickname}（我）` : m.member.nickname }}</text>
+              <text v-if="m.role === 'OWNER'" class="shrink-0 rounded bg-primary-soft px-1.5 text-[11px] leading-[18px] font-medium text-primary-ink">群主</text>
+              <text v-else-if="m.role === 'ADMIN'" class="shrink-0 rounded bg-success-soft px-1.5 text-[11px] leading-[18px] font-medium text-success-ink">管理员</text>
+            </view>
+            <text v-if="m.joinedAt" class="text-xs text-muted">{{ joinedText(m.joinedAt) }}</text>
           </view>
           <view v-if="canManage(m)" class="flex h-11 w-11 items-center justify-center" @click="openActions(m)">
             <wd-icon name="more" size="20px" color="#5C5C5C" />
@@ -65,6 +65,7 @@
 
 <script setup lang="ts">
 import { onLoad, onShow } from '@dcloudio/uni-app'
+import dayjs from 'dayjs'
 import { computed, ref } from 'vue'
 import { useMessage, useToast } from 'wot-design-uni'
 import {
@@ -97,21 +98,18 @@ const myId = computed(() => userStore.userId)
 const isOwner = computed(() => group.value?.myRole === 'OWNER')
 const nameChanged = computed(() => !!group.value && name.value.trim() !== '' && name.value.trim() !== group.value.name)
 
-/** 群组管理接口后端还没做完时为 true：成员名单用详情里的预览代替，管理操作先隐藏 */
-const notReady = ref(false)
-
 async function load() {
-  const g = await fetchGroupDetail(groupId)
+  const [g, list, tpls] = await Promise.all([fetchGroupDetail(groupId), fetchGroupMembers(groupId), fetchGroupTemplates(groupId)])
   group.value = g
   name.value = g.name
-  try {
-    members.value = await fetchGroupMembers(groupId)
-    notReady.value = false
-  } catch {
-    notReady.value = true
-    members.value = g.members.map((member) => ({ member, role: member.id === g.owner.id ? 'OWNER' : 'MEMBER', joinedAt: '' }))
-  }
-  templates.value = await fetchGroupTemplates(groupId).catch(() => [])
+  members.value = list
+  templates.value = tpls
+}
+
+/** 入群时间：今年的只显示月日 */
+function joinedText(joinedAt: string) {
+  const d = dayjs(joinedAt)
+  return `${d.format(d.year() === dayjs().year() ? 'M月D日' : 'YYYY年M月D日')}加入`
 }
 
 onLoad((query) => {
@@ -163,7 +161,7 @@ function createTemplate() {
 
 /** 群主可以操作除自己外的所有人；管理员只能操作普通成员 */
 function canManage(m: GroupMember) {
-  if (notReady.value || m.member.id === myId.value || m.role === 'OWNER') return false
+  if (m.member.id === myId.value || m.role === 'OWNER') return false
   return isOwner.value || m.role === 'MEMBER'
 }
 

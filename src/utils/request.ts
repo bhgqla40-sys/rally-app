@@ -29,12 +29,21 @@ export class ApiError extends Error {
   }
 }
 
-// 小程序没有代理，必须请求完整的后端地址（上线时必须是已备案的 HTTPS 域名）
-let BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/api`
+// 后端地址（不带 /api）。小程序没有代理，必须请求完整的后端地址（上线时必须是已备案的 HTTPS 域名）
+let API_ORIGIN: string = import.meta.env.VITE_API_BASE_URL
 // #ifdef H5
 // H5 请求同源的 /api：开发时由 Vite 代理到本地后端，上线后由 Nginx 转发
-BASE_URL = '/api'
+API_ORIGIN = ''
 // #endif
+const BASE_URL = `${API_ORIGIN}/api`
+
+/**
+ * 后端返回的图片是 /api/uploads/... 这样的相对地址：
+ * H5 和接口同源，直接能用；小程序要补上后端地址，<image> 才加载得到。
+ */
+export function assetUrl(path?: string) {
+  return path?.startsWith('/') && !path.startsWith('//') ? API_ORIGIN + path : path
+}
 
 /**
  * 处理后端的返回结果，request 和 upload 共用：
